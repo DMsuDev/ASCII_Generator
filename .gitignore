@@ -1,3 +1,5 @@
 .vscode/
 assets/
 config.json
+__pycache__/
+*.pyc

@@ -1,8 +1,8 @@
+from typing import Union
 from src.cli.questions_manager import QuestionsManager
 from src.cli.banner import Banner
 
-from src.core.image_handler import ImageProcessor
-from src.core.video_handler import VideoProcessor
+from src.engine import ImageProcessor, VideoProcessor, Processor, FileValidator
 
 from src.settings.config import DEFAULT_SETTINGS, GRADIENT, MODE
 from src.data.json_manager import JsonManager
@@ -19,6 +19,7 @@ SETTINGS: dict = {}
 def main() -> None:
     global SETTINGS
 
+    validator: FileValidator = FileValidator()
     banner: Banner = Banner()
     menu: QuestionsManager = QuestionsManager()
     data_manager: JsonManager = JsonManager(json_name="config.json", default=DEFAULT_SETTINGS, input_func=menu.ask_text)
@@ -26,8 +27,8 @@ def main() -> None:
     SETTINGS = load_settings(data_manager)
     
     ROUTES = {
-        "init": lambda: handle_init(menu, banner, SETTINGS),
-        "settings": lambda: update_settings(menu, data_manager, banner),
+        "init": lambda: handle_init(menu, validator, banner, SETTINGS),
+        "settings": lambda: update_settings(menu, validator, data_manager, banner),
         "exit": lambda: exit_program()
     }
 
@@ -52,7 +53,7 @@ def main() -> None:
 # ============================================================
 
 @clear_screen
-def handle_init(manager: QuestionsManager, banner: Banner, settings: dict = {}):
+def handle_init(manager: QuestionsManager, validator: FileValidator, banner: Banner, settings: dict = {}):
     show_section(banner, title="ASCII ENGINE", subtitle="MODE INPUT")
 
     answer = manager.get_menu("init")
@@ -62,16 +63,16 @@ def handle_init(manager: QuestionsManager, banner: Banner, settings: dict = {}):
 
     match answer["option"]:
         case "camera": 
-            handle_Camera(settings)
+            handle_Camera(settings, validator)
         case "image": 
-            handle_Image(settings)
+            handle_Image(settings, validator)
         case "video": 
-            handle_Video(settings)
+            handle_Video(settings, validator)
         case "back":
             return
 
 @clear_screen
-def handle_settings(manager: QuestionsManager, saveManager: JsonManager, banner: Banner):
+def handle_settings(manager: QuestionsManager, validator: FileValidator, saveManager: JsonManager, banner: Banner):
     global SETTINGS
 
     clear_console()
@@ -87,48 +88,61 @@ def handle_settings(manager: QuestionsManager, saveManager: JsonManager, banner:
     input("Presiona ENTER para continuar...")
 
 # ============================================================
-#                     PROCESSOR FACTORY
-# ============================================================
-
-def create_processor(settings: dict, video: bool) -> ImageProcessor | VideoProcessor:
-    cls = VideoProcessor if video else ImageProcessor
-    return cls(
-        settings["width"],
-        settings["gradient"],
-        settings["mode"],
-        settings["scale_factor"]
-    )
-
-# ============================================================
 #                     CORE HANDLERS
 # ============================================================
 
 @clear_screen
-def handle_Image(settings: dict) -> None:
-    processor = create_processor(settings, false)
-    ascii_art:str = processor.ProcessImage(path=get_source_via_dialog(False))
+def handle_processing(processor: Processor, source: Union[str, int]) -> None:
+    ascii_art: str = processor.run(source)
     print(ascii_art)
-    save_txt(ascii_art)
     input("Presiona ENTER para continuar...")
 
-@clear_screen
-def handle_Camera(settings: dict) -> None:
-    processor: VideoProcessor = create_processor(settings, true)
-    processor.ProcessVideo(0)
-    input("Presiona ENTER para continuar...")
 
 @clear_screen
-def handle_Video(settings: dict) -> None:
-    processor: VideoProcessor = create_processor(settings, true)
-    processor.ProcessVideo(path=get_source_via_dialog(True))
-    input("Presiona ENTER para continuar...")
+def handle_Image(settings: dict, validator: FileValidator) -> None:
+    processor: Processor = ImageProcessor(
+        target_width=settings['width'],
+        scale=settings['scale_factor'],
+        sequence=settings['gradient'],
+        mode=settings['mode'],
+        invert=False,
+        mirror=False,
+        validator=validator
+    )
+    handle_processing(processor, get_source_via_dialog(False))
+
+@clear_screen
+def handle_Camera(settings: dict, validator: FileValidator) -> None:
+    processor: Processor = VideoProcessor(
+        target_width=settings['width'],
+        scale=settings['scale_factor'],
+        sequence=settings['gradient'],
+        mode=settings['mode'],
+        invert=False,
+        mirror=False,
+        validator=validator
+    )
+    handle_processing(processor, 0)
+
+@clear_screen
+def handle_Video(settings: dict, validator: FileValidator) -> None:
+    processor: Processor = VideoProcessor(
+        target_width=settings['width'],
+        scale=settings['scale_factor'],
+        sequence=settings['gradient'],
+        mode=settings['mode'],
+        invert=False,
+        mirror=False,
+        validator=validator
+    )
+    handle_processing(processor, get_source_via_dialog(True))
 
 # ============================================================
 #                     SETTINGS HELPERS
 # ============================================================
 
-def update_settings(menu: QuestionsManager, data: JsonManager, banner: Banner):
-    new_settings = handle_settings(menu, data, banner)
+def update_settings(menu: QuestionsManager, validator: FileValidator, data: JsonManager, banner: Banner):
+    new_settings = handle_settings(menu, validator, data, banner)
     return new_settings
 
 def load_settings(manager: JsonManager) -> dict:
