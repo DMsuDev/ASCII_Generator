@@ -73,7 +73,7 @@ class QuestionsManager:
         ])
         return self._normalize_str(answer)
 
-    def ask_list(self, message: str, choices: list[str], default=None) -> str:
+    def ask_list(self, message: str, choices: list[tuple[str,str]], default=None) -> str:
         answer: dict | None = inquirer.prompt([
             inquirer.List("value", message=message, choices=choices, default=default)
         ])

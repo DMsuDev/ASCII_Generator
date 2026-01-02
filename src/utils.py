@@ -171,11 +171,9 @@ def gray_to_ansi(gray, char) -> str:
     color_code = 232 + int(gray / 255 * 23)
     return f"\033[38;5;{color_code}m{char}\033[0m"
 
-def load_txt() -> str:
-    with open("archivo.txt", "r", encoding="utf-8") as f:
-        return f.read()
-        
 
-def save_txt(msg: str) -> None:
-    with open("archivo.txt", "w", encoding="utf-8") as f:
-        f.write(msg)
+def render_image(frame_ascii: str, save: bool = False) -> None:
+    print(frame_ascii)
+    if save:
+        with open("frame.txt", "w", encoding="utf-8") as f:
+            f.write(frame_ascii)
