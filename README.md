@@ -1,70 +1,75 @@
-# 🎥 ASCII Generator — Motor ASCII modular en Python
+# 🎥 ASCII Generator — Modular ASCII Engine in Python
 
-Este es uno de mis proyectos mas recientes, estuve aburrido (literal) y estuve investigando sobre el mundo del arte ascii y de alli surgio la inspiracion para este proyecto
+[![Python](https://img.shields.io/badge/Language-Python-3776AB?style=flat&logo=python)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat)](LICENSE)
+![Status](https://img.shields.io/badge/Status-Early%20Development-yellow?style=flat)
+![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?style=flat)
 
-## ✨ Características
+One of my most recent projects! I was literally bored and decided to explore the world of ASCII art, which inspired this project.
 
-- 🔡 **Conversión de imágenes y vídeo a ASCII**  
-- 🎛️ **CLI interactiva** con menús, toggles y selección de archivos  
-- 🎨 **Modos de color** y estilos configurables  
-- 🧩 **Arquitectura modular**: separación clara entre lógica, datos y UI  
-- 🖼️ **Soporte para OpenCV** para procesar frames de vídeo  
-- 🧰 **Integración con Inquirer, Tkinter y PyFiglet** para una experiencia fluida  
-- 🧪 **Tipado estricto** y documentación técnica para facilitar la extensión del proyecto  
+<p align="center">
+  <img src="assets/app.png" width="600" alt="MFOG App Preview">
+</p>
 
+ASCII Generator allows you to convert images and videos into ASCII art in a modular, interactive, and fully configurable way.
 
-## 📦 Tecnologías utilizadas
+## 📑 Table of Contents
 
-| Tecnología | Uso |
-|-----------|-----|
-| **Python 3.x** | Lenguaje principal |
-| **OpenCV** | Procesamiento de imágenes y vídeo |
-| **Tkinter** | Selección de archivos mediante diálogos |
-| **InquirerPy** | Menús interactivos en terminal |
-| **PyFiglet** | Banners ASCII |
-| **Colorama** | Colores en terminal |
+- [✨ Features](#-features)
+- [📦 Technologies Used](#-technologies-used)
+- [🚀 Installation](#-installation)
+- [▶️ Usage](#-usage)
+- [✨ Examples](#-examples)
+- [🤝 Contributions](#-contributions)
+- [📝 License](#-license)
 
+## 🚀 Installation
 
-## 🚀 Instalación
+Clone the repository:
 
-Clona el repositorio:
-
-```cmd
+```bash
 git clone https://github.com/DMsuDev/ASCII_Generator.git
 cd ASCII_Generator
 ```
 
-Instala las dependencias:
+Install the dependencies:
 
 ```cmd
 pip install -r requirements.txt
 ```
 
-## ▶️ Uso
+## ▶️ Usage
 
-Ejecuta el programa principal:
+Run the main program:
 
 ```cmd
 python app.py
 ```
 
-Desde ahí podrás:
-- Seleccionar un archivo de vídeo o imagen
-- Ajustar parámetros (ancho, densidad, color, velocidad…)
-- Iniciar la conversión en tiempo real
-- Navegar por menús dinámicos y configuraciones persistentes
+From there you can:
 
-## ✨ Ejemplos
-![Descripción de la imagen](./assets/rgb_camera.png)
-![Descripción de la imagen](./assets/var1_gray.png)
-![Descripción de la imagen](./assets/var2_ascii.png)
-![Descripción de la imagen](./assets/var2_rgb_ascii.png)
+- Select an image or video file
+- Adjust parameters (width, density, color, speed…)
+- Start real-time ASCII conversion
+- Navigate dynamic menus and persistent settings
 
-## 🛠️ Roadmap
+## ✨ Examples
 
-- Arreglar los FPS (Actualmente solo muestran en pantalla)
-- Implementar perfiles de configuración guardables
-- Añadir soporte para exportar ASCII a archivo
-- Mejorar rendimiento del renderizado en vídeo
-- Deteccion de bordes
-- Arreglar las Excepciones
+| RGB Camera Input                       | Grayscale ASCII                       | ASCII Conversion                             | RGB ASCII Output                          |
+| -------------------------------------- | ------------------------------------- | -------------------------------------------- | ----------------------------------------- |
+| ![RGB Camera](./assets/rgb_camera.png) | ![Gray ASCII](./assets/var1_gray.png) | ![ASCII Conversion](./assets/var2_ascii.png) | ![RGB ASCII](./assets/var2_rgb_ascii.png) |
+
+## 🤝 Contributions
+
+Contributions are **welcome**! Whether you want to fix bugs, improve performance, add new features, or enhance the UI, feel free to open an issue or submit a pull request.
+
+Please make sure to follow the repository's **code style** and **documentation conventions**.
+
+We appreciate your contributions and feedback! 🙌
+
+## 📝 License
+
+MFOG is licensed under the MIT License.  
+See the [LICENSE](LICENSE) file for more details.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat)](LICENSE)
