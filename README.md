@@ -15,10 +15,9 @@ ASCII Generator allows you to convert images and videos into ASCII art in a modu
 
 ## 📑 Table of Contents
 
-- [✨ Features](#-features)
-- [📦 Technologies Used](#-technologies-used)
 - [🚀 Installation](#-installation)
-- [▶️ Usage](#-usage)
+- [▶️ Usage](#usage)
+- [📦 Dependencies](#-dependencies)
 - [✨ Examples](#-examples)
 - [🤝 Contributions](#-contributions)
 - [📝 License](#-license)
@@ -38,7 +37,7 @@ Install the dependencies:
 pip install -r requirements.txt
 ```
 
-## ▶️ Usage
+## Usage
 
 Run the main program:
 
@@ -52,6 +51,21 @@ From there you can:
 - Adjust parameters (width, density, color, speed…)
 - Start real-time ASCII conversion
 - Navigate dynamic menus and persistent settings
+
+## 📦 Dependencies
+
+The following dependencies are required to run this project:
+
+| Package        | Version / Notes                          |
+|----------------|------------------------------------------|
+| **Python**     | 3.11.0b4                                 |
+| **OpenCV**     | 4.12.0.88                                |
+| **NumPy**      | 2.2.x (compatible with OpenCV)          |
+| **readchar**   | Latest stable                             |
+| **Colorama**   | Latest stable                             |
+| **Pillow**     | Latest stable (image processing)         |
+| **InquirerPy** | Latest stable (CLI menus, optional)      |
+| **PyFiglet**   | Latest stable (ASCII banners, optional)  |
 
 ## ✨ Examples
 
