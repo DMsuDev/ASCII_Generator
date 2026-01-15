@@ -6,7 +6,6 @@ from src.cli.styles import R
 
 
 class QuestionsManager:
-
     # ---------------------------------------------------------
     #               PROMPT BUILDER
     # ---------------------------------------------------------
@@ -25,16 +24,16 @@ class QuestionsManager:
                     name=menu["name"],
                     message=menu["message"],
                     choices=menu["choices"],
-                    default=menu.get("default")
+                    default=menu.get("default"),
                 )
             ]
-        
+
         elif menu_type == "text":
             return [
                 inquirer.Text(
                     name=menu["name"],
                     message=menu["message"],
-                    default=menu.get("default")
+                    default=menu.get("default"),
                 )
             ]
 
@@ -46,7 +45,7 @@ class QuestionsManager:
                         inquirer.Text(
                             name=field["name"],
                             message=field["message"],
-                            default=field.get("default")
+                            default=field.get("default"),
                         )
                     )
                 elif field["type"] == "list":
@@ -55,7 +54,7 @@ class QuestionsManager:
                             name=field["name"],
                             message=field["message"],
                             choices=field["choices"],
-                            default=field.get("default")
+                            default=field.get("default"),
                         )
                     )
                 else:
@@ -68,15 +67,17 @@ class QuestionsManager:
     # -----------------------------
 
     def ask_text(self, message: str = "message", default: str = "") -> str:
-        answer = inquirer.prompt([
-            inquirer.Text("value", message=message, default=default)
-        ])
+        answer = inquirer.prompt(
+            [inquirer.Text("value", message=message, default=default)]
+        )
         return self._normalize_str(answer)
 
-    def ask_list(self, message: str, choices: list[tuple[str,str]], default=None) -> str:
-        answer: dict | None = inquirer.prompt([
-            inquirer.List("value", message=message, choices=choices, default=default)
-        ])
+    def ask_list(
+        self, message: str, choices: list[tuple[str, str]], default=None
+    ) -> str:
+        answer: dict | None = inquirer.prompt(
+            [inquirer.List("value", message=message, choices=choices, default=default)]
+        )
         return self._normalize_str(answer)
 
     # -----------------------------

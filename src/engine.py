@@ -1,5 +1,8 @@
 from PIL import Image
 import cv2
+import keyboard
+
+from colorama import Fore, Style, init
 
 from typing import Optional, Union
 from abc import ABC, abstractmethod
@@ -15,11 +18,10 @@ from src.utils import (
     rgb_to_ansi,
     gray_to_ansi,
     scale_height,
-    get_terminal_size
+    get_terminal_size,
 )
 from src.settings.config import MODE, GRADIENT
 from src.cli.styles import R
-
 
 
 class FileValidator:
@@ -39,9 +41,17 @@ class FileValidator:
         raise TypeError(f"Tipo de fuente no válido: {type(source)}")
 
 
-
 class Processor(ABC):
-    def __init__(self, target_width: int, scale: float, sequence: GRADIENT, mode: MODE, invert: bool,  mirror: bool, validator: FileValidator):
+    def __init__(
+        self,
+        target_width: int,
+        scale: float,
+        sequence: GRADIENT,
+        mode: MODE,
+        invert: bool,
+        mirror: bool,
+        validator: FileValidator,
+    ):
         self._target_width: int = int(target_width)
         self._scale_factor: float = float(scale)
 
@@ -63,7 +73,6 @@ class Processor(ABC):
             raise FileNotFoundError(R + "El fichero no existe")
 
 
-
 class ImageProcessor(Processor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -73,18 +82,24 @@ class ImageProcessor(Processor):
         if self._image is None:
             raise ValueError(R + "No image loaded. Call ProcessImage() first.")
 
-        pixels: Optional[list] = self._image.load()  # MUCH faster than getpixel()
+        pixels = self._image.load()  # MUCH faster than getpixel()
         assert pixels is not None, R + "Error al obtener los pixeles de la imagen."
-        
+
         ascii_art: list[str] = []
         w, h = self._image.size
 
         for y in range(h):
             row = []
             for x in range(w):
-                r, g, b = pixels[x, y][:3]
+                pixel = pixels[x, y]
+                # Handle different image modes
+                if isinstance(pixel, (tuple, list)):
+                    r, g, b = pixel[:3]
+                else:
+                    # Grayscale image, single value
+                    r = g = b = pixel
 
-                brightness = calc_avg_brightness(r, g, b)
+                brightness = calc_avg_brightness(int(r), int(g), int(b))
                 ascii_char = get_index_ascii(brightness, self._gradient)
 
                 if self._mode == MODE.RGB:
@@ -102,7 +117,7 @@ class ImageProcessor(Processor):
         super().run(source)
         if not isinstance(source, str):
             raise TypeError("ImageProcessor solo acepta rutas de fichero")
-        
+
         self._image = Image.open(source)
 
         width, height = self._image.size
@@ -112,15 +127,14 @@ class ImageProcessor(Processor):
         return self._execute_core()
 
 
-
 class VideoProcessor(Processor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-    
+
     def _execute_core(self, frame: Optional[np.ndarray] = None) -> str:
         if frame is None:
             raise ValueError("Frame requerido para VideoProcessor")
-        
+
         # Invertir o espejar si corresponde
         if self._invert:
             frame = cv2.bitwise_not(frame)
@@ -141,7 +155,7 @@ class VideoProcessor(Processor):
             target_width=new_width,
             original_w=w,
             original_h=h,
-            scale_factor=self._scale_factor
+            scale_factor=self._scale_factor,
         )
 
         # Redimensionar (rápido)
@@ -188,8 +202,8 @@ class VideoProcessor(Processor):
             raise ValueError(R + "No se pudo abrir la fuente de vídeo")
 
         # Variables para calcular FPS manualmente.
-        last_time = time.time()   # Marca de tiempo del último segundo
-        frames = 0                # Contador de frames procesados
+        last_time = time.time()  # Marca de tiempo del último segundo
+        frames = 0  # Contador de frames procesados
         fps = 0.0
 
         try:
@@ -216,14 +230,16 @@ class VideoProcessor(Processor):
                 print(ascii_art)
 
                 if fps:
-                    print(f"\nFPS: {fps:.2f}")
+                    print(f"{Fore.CYAN}{Style.BRIGHT}FPS: {fps:.2f}")
 
-                # Salir con 'q'
-                if cv2.waitKey(1) & 0xFF == ord('q'):
+                print(f"{Fore.YELLOW}{Style.BRIGHT}Presiona 'q' o 'Esc' para salir...")
+
+                # Comprobar salida
+                if keyboard.is_pressed("q") or keyboard.is_pressed("esc"):
                     break
 
         except KeyboardInterrupt:
-            print("\nSaliendo...")
+            print(f"{Fore.RED}{Style.BRIGHT}Saliendo...")
 
         # Liberamos la cámara y cerramos ventanas de OpenCV.
         cap.release()

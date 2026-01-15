@@ -2,6 +2,7 @@ from os import get_terminal_size
 from pyfiglet import Figlet, FontNotFound
 from src.cli.styles import C, Y, G, W  # Colores que definiste en styles.py
 
+
 class Banner:
     """Genera banners ASCII estilizados para la CLI."""
 
@@ -20,7 +21,6 @@ class Banner:
             print(W + f"[WARN] Fuente '{font_name}' no encontrada. Usando 'standard'.")
             return Figlet(font="standard")
 
-
     # ---------------------------------------------------------
     #               RENDER METHODS
     # ---------------------------------------------------------
@@ -35,7 +35,6 @@ class Banner:
         """Imprime un banner con título y subtítulo opcional."""
         print(self.render(title, subtitle))
 
-    
     def footer(self):
         width = get_terminal_size().columns
         line = "=" * min(width, 46)

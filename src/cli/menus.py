@@ -8,10 +8,9 @@ MENUS = {
         "choices": [
             (Y + "🛠️ Iniciar", "init"),
             (Y + "⚙️ Configuración", "settings"),
-            (Y + "🚪 Salir", "exit")
-        ]
+            (Y + "🚪 Salir", "exit"),
+        ],
     },
-
     "init": {
         "type": "list",
         "name": "option",
@@ -20,10 +19,9 @@ MENUS = {
             (Y + "📷 Cámara", "camera"),
             (Y + "🖼️ Imagen", "image"),
             (Y + "🎬 Video", "video"),
-            (Y + "◀️ Atrás", "back")
-        ]
+            (Y + "◀️ Atrás", "back"),
+        ],
     },
-
     "settings": {
         "type": "form",
         "fields": [
@@ -31,19 +29,19 @@ MENUS = {
                 "type": "text",
                 "name": "fps",
                 "message": "Define el límite de FPS del video",
-                "default": "24"
+                "default": "24",
             },
             {
                 "type": "text",
                 "name": "width",
                 "message": "Define el ancho objetivo",
-                "default": "120"
+                "default": "120",
             },
             {
                 "type": "text",
                 "name": "scale_factor",
                 "message": "Define el factor para escalar la altura del video/imagen",
-                "default": "0.43"
+                "default": "0.43",
             },
             {
                 "type": "list",
@@ -52,9 +50,9 @@ MENUS = {
                 "choices": [
                     (Y + "RGB", "RGB"),
                     (Y + "Escala de grises", "GRAYSCALE"),
-                    (Y + "ASCII", "ASCII")
+                    (Y + "ASCII", "ASCII"),
                 ],
-                "default": "RGB"   # ← Corregido
+                "default": "RGB",  # ← Corregido
             },
             {
                 "type": "list",
@@ -62,20 +60,22 @@ MENUS = {
                 "message": "Selecciona el tipo de gradiente",
                 "choices": [
                     (Y + "Gradiente corto (@%#*+=-:. )", "BASIC"),
-                    (Y + "Gradiente largo ($@B%8&WM#*oahkbdpqwmZO0QLCJUYX...)", "DETAILED"),
+                    (
+                        Y + "Gradiente largo ($@B%8&WM#*oahkbdpqwmZO0QLCJUYX...)",
+                        "DETAILED",
+                    ),
                     (Y + "LIGHT (8@$e*+!:.  )", "LIGHT"),
                     (Y + "COLOR (◍sr*.)", "COLOR"),
                     (Y + "FILLED █▓▒", "FILLED"),
                 ],
-                "default": "DETAILED"
-            }
-        ]
+                "default": "DETAILED",
+            },
+        ],
     },
-
     "json": {
         "type": "text",
         "name": "option",
         "message": "Escriba el nombre del archivo.json",
-        "default": "config.json"
-    }
+        "default": "config.json",
+    },
 }

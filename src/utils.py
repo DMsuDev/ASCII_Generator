@@ -9,11 +9,13 @@ from functools import wraps
 #   LIMPIEZA DE CONSOLA
 # ============================
 
+
 def clear_screen(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         clear_console()
         return func(*args, **kwargs)
+
     return wrapper
 
 
@@ -25,6 +27,7 @@ def clear_console() -> None:
 # ============================
 #   DIÁLOGO DE ARCHIVOS
 # ============================
+
 
 def get_source_via_dialog(isVideo: bool = True) -> str:
     """Abre un diálogo para seleccionar un archivo y devuelve su ruta."""
@@ -42,7 +45,7 @@ def get_source_via_dialog(isVideo: bool = True) -> str:
         parent=root,
         title="Select File",
         filetypes=[(label, file_types), ("All Files", "*.*")],
-        initialdir=str(Path.cwd())
+        initialdir=str(Path.cwd()),
     )
     return file_path
 
@@ -50,6 +53,7 @@ def get_source_via_dialog(isVideo: bool = True) -> str:
 # ============================
 #   TERMINAL
 # ============================
+
 
 def get_terminal_size():
     """Devuelve el tamaño actual de la terminal (cols, rows)."""
@@ -60,6 +64,7 @@ def get_terminal_size():
 # ============================
 #   TIEMPO Y FPS
 # ============================
+
 
 def limit_fps(start_time: float, fps: int):
     """Limita la velocidad de refresco para videos ASCII."""
@@ -72,6 +77,7 @@ def limit_fps(start_time: float, fps: int):
 # ============================
 #           LOGS
 # ============================
+
 
 def log_info(msg: str):
     print(Fore.CYAN + "[INFO] " + Style.RESET_ALL + msg)
@@ -89,7 +95,10 @@ def log_error(msg: str):
 #   ASCII UTILITIES
 # ============================
 
-def scale_height(target_width: int, original_w: int, original_h: int, scale_factor: float = 0.55) -> int:
+
+def scale_height(
+    target_width: int, original_w: int, original_h: int, scale_factor: float = 0.55
+) -> int:
     """Calcula la altura proporcional manteniendo la relación de aspecto."""
     ratio = original_h / original_w
     return int(ratio * target_width * scale_factor)
@@ -136,6 +145,7 @@ def rgb_to_ansi(r, g, b, char) -> str:
     """
 
     return f"\033[38;2;{r};{g};{b}m{char}\033[0m"
+
 
 def gray_to_ansi(gray, char) -> str:
     """

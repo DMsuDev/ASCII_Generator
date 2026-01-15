@@ -1,15 +1,18 @@
 import json
 import os
 
-class JsonManager():
+
+class JsonManager:
     """
     Gestor simple para cargar y guardar archivos JSON con valores por defecto.
     """
-    def __init__(self, 
-                 json_name: str = "config.json", 
-                 default: dict | None = None, 
-                 input_func = None
-        ):
+
+    def __init__(
+        self,
+        json_name: str = "config.json",
+        default: dict | None = None,
+        input_func=None,
+    ):
         self._name = json_name
         self._default = default or {}
 
@@ -21,12 +24,12 @@ class JsonManager():
         if not os.path.exists(self._name):
             print(f"{self._name} not found. Creating with defaults.")
 
-            #new_name = self._input_func("Introduce el nombre del nuevo archivo JSON", "config.json")
-            #if not new_name.endswith(".json"):
+            # new_name = self._input_func("Introduce el nombre del nuevo archivo JSON", "config.json")
+            # if not new_name.endswith(".json"):
             #    new_name += ".json"
-            #self._name = new_name
+            # self._name = new_name
 
-            self.save(data = self._default)
+            self.save(data=self._default)
             return self._default
 
         try:
@@ -36,7 +39,6 @@ class JsonManager():
             print(f"{self._name} is corrupted. Restoring defaults.")
             self.save(data=self._default)
             return self._default
-
 
     def save(self, name: str | None = None, data: dict | None = None) -> None:
         """
