@@ -2,7 +2,6 @@ import time
 import shutil
 from functools import wraps
 from pathlib import Path
-from typing import Optional
 
 from colorama import Fore, Style
 from tkinter import Tk, filedialog
@@ -218,23 +217,3 @@ def gray_to_ansi(gray, char) -> str:
     """
     color_code = 232 + int(gray / 255 * 23)
     return f"\033[38;5;{color_code}m{char}\033[0m"
-
-
-def render_image(
-    ascii_frame: str, save: bool = False, filename: Optional[str] = None
-) -> None:
-    """
-    Print ASCII frame to console.
-    Optionally save to file if save=True.
-    """
-    # This is only for debugging purposes (Uncomment if needed)
-    # print(ascii_frame if ascii_frame else "Error: No ASCII frame to render.")
-    
-    if save:
-        output_file = filename or f"ascii_output_{int(time.time())}.txt"
-        try:
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(ascii_frame)
-            log_info(f"Saved to: {output_file}")
-        except Exception as e:
-            log_error(f"Failed to save file: {e}")

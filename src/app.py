@@ -7,8 +7,9 @@ from processor import FrameProcessor, Processor, FileValidator
 from settings.config import DEFAULT_SETTINGS, normalize_runtime_settings
 from data.config_manager import ConfigManager
 
-from utils import clear_console, clear_screen, get_source_via_dialog, render_image
+from utils import clear_console, clear_screen, get_source_via_dialog
 from cli.styles import R, Y
+from media import frame_to_text, frames_to_images, images_to_video
 
 # ============================================================
 #                     MAIN APPLICATION
@@ -91,7 +92,6 @@ def handle_init(
             print(R + f"Unknown mode: {mode}")
 
 
-
 @clear_screen
 def handle_settings_update(
     menu: QuestionsManager,
@@ -157,7 +157,7 @@ def handle_image(settings: Dict[str, Any], menu: QuestionsManager) -> None:
     ascii_art = processor.start(source)
     if ask_save(menu):
         # TODO: allow user to choose filename/path
-        render_image(ascii_art, True)
+        frame_to_text(ascii_art, filename="ascii_image_output.txt")
 
     input("\nPress ENTER to continue...")
 
@@ -179,7 +179,31 @@ def handle_video(settings: Dict[str, Any], menu: QuestionsManager) -> None:
         print(Y + "No video selected.")
         return
 
-    processor.start(source)
+    ascii_art: str = processor.start(source)
+    # try to recover list of frames (processor returns joined string separated by blank line)
+    frames_list: list[str] = []
+    if isinstance(ascii_art, str):
+        frames_list = ascii_art.split("\n\n") if ascii_art else []
+    else:
+        try:
+            frames_list = list(ascii_art)
+        except Exception:
+            frames_list = []
+
+    message = f"Save the {len(frames_list)} frames as images and video?"
+    if ask_save(menu, message=message):
+        # Export frames to images
+        out_dir = "output_frames"
+        frames_to_images(frames_list, out_dir, font_path="assets/JetBrainsMonoNerdFont-Bold.ttf")
+
+        print(Y + f"Saved frames to directory: {out_dir}")
+
+        # Create video from images
+        video_path = "output_video.mp4"
+        images_to_video(out_dir, video_path, fps=settings.get("fps", 12))
+        print(Y + f"Saved video: {video_path}")
+
+    input("\nPress ENTER to continue...")
 
 
 # ============================================================
@@ -193,10 +217,12 @@ def load_and_normalize_settings(config_manager: ConfigManager) -> Dict[str, Any]
     return normalize_runtime_settings(raw)
 
 
-def ask_save(menu: QuestionsManager) -> bool:
-    """Ask if user wants to save the generated ASCII art."""
+def ask_save(
+    menu: QuestionsManager, message: str = "Save the ASCII art to a file?"
+) -> bool:
+    """Ask if user wants to save the generated source."""
     answer = menu.ask_list(
-        message="Save the ASCII art to a file?",
+        message=message,
         choices=[(Y + "Yes", "1"), (Y + "No", "0")],
         default="0",
     )
