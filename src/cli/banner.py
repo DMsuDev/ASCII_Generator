@@ -4,41 +4,36 @@ from src.cli.styles import C, Y, G, W  # Colores que definiste en styles.py
 
 
 class Banner:
-    """Genera banners ASCII estilizados para la CLI."""
+    """Generates stylized ASCII banners for the CLI using pyfiglet."""
 
-    def __init__(self, font_title: str = "slant", font_sub: str = "small"):
-        self.title_font = self._safe_font(font_title)
-        self.sub_font = self._safe_font(font_sub)
+    def __init__(self, title_font: str = "slant", subtitle_font: str = "small"):
+        self.title_figlet = self._load_font_safe(title_font)
+        self.subtitle_figlet = self._load_font_safe(subtitle_font)
 
-    # ---------------------------------------------------------
-    #               FONT VALIDATION
-    # ---------------------------------------------------------
-    def _safe_font(self, font_name: str) -> Figlet:
-        """Carga una fuente de forma segura, usando fallback si falla."""
+    def _load_font_safe(self, font_name: str) -> Figlet:
+        """Load figlet font safely with fallback to 'standard'."""
         try:
             return Figlet(font=font_name)
         except FontNotFound:
-            print(W + f"[WARN] Fuente '{font_name}' no encontrada. Usando 'standard'.")
+            print(W + f"[WARN] Font '{font_name}' not found. Using 'standard'.")
             return Figlet(font="standard")
 
-    # ---------------------------------------------------------
-    #               RENDER METHODS
-    # ---------------------------------------------------------
     def render(self, title: str, subtitle: str | None = None) -> str:
-        """Devuelve el banner como string sin imprimirlo."""
-        output = C + self.title_font.renderText(title)
+        """Generate banner as string (without printing)."""
+        output = C + self.title_figlet.renderText(title)
         if subtitle:
-            output += Y + self.sub_font.renderText(subtitle)
+            output += Y + self.subtitle_figlet.renderText(subtitle)
         return output
 
-    def show(self, title: str = "Main Title", subtitle: str | None = None):
-        """Imprime un banner con título y subtítulo opcional."""
+    def show(self, title: str = "ASCII", subtitle: str | None = None) -> None:
+        """Print the banner to console."""
         print(self.render(title, subtitle))
 
-    def footer(self):
+    def footer(self) -> None:
+        """Print a simple centered footer line."""
         width = get_terminal_size().columns
-        line = "=" * min(width, 46)
+        line = "=" * min(width, 50)
 
         print(G + line)
-        print(W + "           ASCII GENERATOR by D*****          ")
+        print(W + "      ASCII GENERATOR by DMsuDev      ".center(len(line)))
         print(G + line + "\n")
