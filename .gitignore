@@ -1,7 +1,7 @@
 __pycache__/
+others/
 config.json
 frame.txt
-test/
 
 # Distribution / packaging
 build/
