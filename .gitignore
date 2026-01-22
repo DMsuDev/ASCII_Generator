@@ -1,7 +1,13 @@
+# Byte-compiled
 __pycache__/
+
+# Random files
 others/
-config.json
-frame.txt
+
+# Generated files
+output/
+*.json
+*.log
 
 # Distribution / packaging
 build/
