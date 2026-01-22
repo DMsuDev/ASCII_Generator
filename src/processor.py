@@ -148,7 +148,8 @@ class FrameProcessor(Processor):
 
     def start(self, source: Union[str, int]) -> str:
         self._validate_source(source)
-
+        ascii_art: list[str] = []
+        
         cap = cv2.VideoCapture(source)
         if not cap.isOpened():
             raise RuntimeError(R + "Failed to open video/camera source")
@@ -174,10 +175,11 @@ class FrameProcessor(Processor):
                 else:
                     fps = None
 
-                ascii_art = self.process_frame(frame)
+                ascii_art.append(self.process_frame(frame))
+                ascii_art_str = ascii_art[-1]
 
                 clear_console()
-                print(ascii_art)
+                print(ascii_art_str if ascii_art_str else "Error: No ASCII frame to render.")
 
                 if fps is not None:
                     print(f"{Fore.CYAN}{Style.BRIGHT}FPS: {fps:.1f}")
@@ -197,4 +199,4 @@ class FrameProcessor(Processor):
             cap.release()
             cv2.destroyAllWindows()
 
-        return ""
+        return "\n\n".join(ascii_art)
