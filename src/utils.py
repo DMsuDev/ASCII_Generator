@@ -227,7 +227,9 @@ def render_image(
     Print ASCII frame to console.
     Optionally save to file if save=True.
     """
-    print(ascii_frame)
+    # This is only for debugging purposes (Uncomment if needed)
+    # print(ascii_frame if ascii_frame else "Error: No ASCII frame to render.")
+    
     if save:
         output_file = filename or f"ascii_output_{int(time.time())}.txt"
         try:
