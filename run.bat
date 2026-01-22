@@ -10,5 +10,6 @@ start "My Python Application" cmd /k ^
     cd /d "%~dp0" ^&^
     python src/app.py ^&^
     echo. ^&^
+    python test/clean.py ^&^
     echo Press any key to exit... ^&^
     pause
