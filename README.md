@@ -56,16 +56,15 @@ From there you can:
 
 The following dependencies are required to run this project:
 
-| Package        | Version / Notes                          |
-|----------------|------------------------------------------|
-| **Python**     | 3.11.0b4                                 |
-| **OpenCV**     | 4.12.0.88                                |
+| Package        | Version / Notes                         |
+| -------------- | --------------------------------------- |
+| **Python**     | 3.11.0 or 3.12.0                        |
+| **OpenCV**     | 4.12.0.88                               |
 | **NumPy**      | 2.2.x (compatible with OpenCV)          |
-| **readchar**   | Latest stable                             |
-| **Colorama**   | Latest stable                             |
-| **Pillow**     | Latest stable (image processing)         |
-| **InquirerPy** | Latest stable (CLI menus, optional)      |
-| **PyFiglet**   | Latest stable (ASCII banners, optional)  |
+| **readchar**   | Latest stable                           |
+| **Colorama**   | Latest stable                           |
+| **InquirerPy** | Latest stable (CLI menus, optional)     |
+| **PyFiglet**   | Latest stable (ASCII banners, optional) |
 
 ## ✨ Examples
 
