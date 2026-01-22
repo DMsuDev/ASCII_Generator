@@ -1,16 +1,21 @@
 import time
 import shutil
-from colorama import Fore, Style
-from tkinter import filedialog, Tk
-from pathlib import Path
 from functools import wraps
+from pathlib import Path
+from typing import Optional
+
+from colorama import Fore, Style
+from tkinter import Tk, filedialog
+
 
 # ============================
-#   LIMPIEZA DE CONSOLA
+#   CONSOLE CLEARING
 # ============================
 
 
 def clear_screen(func):
+    """Decorator to clear console before executing the wrapped function."""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         clear_console()
@@ -20,102 +25,135 @@ def clear_screen(func):
 
 
 def clear_console() -> None:
-    """Limpia la consola de forma multiplataforma."""
+    """Clear the terminal/console in a cross-platform way."""
     print("\033c", end="")
 
 
 # ============================
-#   DIÁLOGO DE ARCHIVOS
+#   FILE DIALOG UTILITIES
 # ============================
 
 
-def get_source_via_dialog(isVideo: bool = True) -> str:
-    """Abre un diálogo para seleccionar un archivo y devuelve su ruta."""
+def get_source_via_dialog(is_video: bool = False) -> str:
+    """
+    Open a file dialog to select an image or video file.
+    Returns the selected file path or empty string if cancelled.
+    """
     root = Tk()
-    root.withdraw()  # Ocultar ventana principal
+    root.withdraw()  # Hide the main window
 
-    if isVideo:
-        file_types = "*.mp4 *.avi *.mov *.mkv"
-        label = "Video Files"
+    if is_video:
+        title: str = "Select Video File"
+        file_types: list[tuple[str, str]] = [
+            ("Video Files", "*.mp4 *.avi *.mov *.mkv *.webm"),
+            ("All Files", "*.*"),
+        ]
     else:
-        file_types = "*.png *.jpg *.jpeg *.bmp"
-        label = "Image Files"
+        title: str = "Select Image File"
+        file_types: list[tuple[str, str]] = [
+            ("Image Files", "*.png *.jpg *.jpeg *.bmp *.gif"),
+            ("All Files", "*.*"),
+        ]
 
     file_path = filedialog.askopenfilename(
         parent=root,
-        title="Select File",
-        filetypes=[(label, file_types), ("All Files", "*.*")],
-        initialdir=str(Path.cwd()),
+        title=title,
+        filetypes=file_types,
+        initialdir=str(Path.home()),  # Better default: user home
     )
+
+    root.destroy()  # Clean up
     return file_path
 
 
 # ============================
-#   TERMINAL
+#   TERMINAL UTILITIES
 # ============================
 
 
-def get_terminal_size():
-    """Devuelve el tamaño actual de la terminal (cols, rows)."""
-    size = shutil.get_terminal_size()
-    return size.columns, size.lines
+def get_terminal_size() -> tuple[int, int]:
+    """
+    Get current terminal dimensions.
+    Returns (columns, lines)
+    """
+    try:
+        size = shutil.get_terminal_size(fallback=(80, 24))
+        return size.columns, size.lines
+    except Exception:
+        return 80, 24  # Safe fallback
 
 
 # ============================
-#   TIEMPO Y FPS
+#   FPS / TIMING CONTROL
 # ============================
 
 
-def limit_fps(start_time: float, fps: int):
-    """Limita la velocidad de refresco para videos ASCII."""
-    frame_duration = 1 / fps
+def limit_fps(start_time: float, target_fps: int) -> None:
+    """
+    Sleep if necessary to maintain target FPS.
+    Use inside video/camera processing loops.
+    """
+    if target_fps <= 0:
+        return
+
+    frame_duration = 1.0 / target_fps
     elapsed = time.time() - start_time
+
     if elapsed < frame_duration:
         time.sleep(frame_duration - elapsed)
 
 
 # ============================
-#           LOGS
+#   LOGGING HELPERS
 # ============================
 
 
-def log_info(msg: str):
-    print(Fore.CYAN + "[INFO] " + Style.RESET_ALL + msg)
+def log_info(msg: str) -> None:
+    """Print info message in cyan."""
+    print(f"{Fore.CYAN}[INFO]{Style.RESET_ALL} {msg}")
 
 
-def log_warning(msg: str):
-    print(Fore.YELLOW + "[WARN] " + Style.RESET_ALL + msg)
+def log_warning(msg: str) -> None:
+    """Print warning message in yellow."""
+    print(f"{Fore.YELLOW}[WARN]{Style.RESET_ALL} {msg}")
 
 
-def log_error(msg: str):
-    print(Fore.RED + "[ERROR] " + Style.RESET_ALL + msg)
+def log_error(msg: str) -> None:
+    """Print error message in red."""
+    print(f"{Fore.RED}[ERROR]{Style.RESET_ALL} {msg}")
 
 
 # ============================
-#   ASCII UTILITIES
+#   IMAGE / ASCII UTILITIES
 # ============================
 
 
 def scale_height(
-    target_width: int, original_w: int, original_h: int, scale_factor: float = 0.55
+    target_width: int,
+    original_width: int,
+    original_height: int,
+    scale_factor: float = 0.43,
 ) -> int:
-    """Calcula la altura proporcional manteniendo la relación de aspecto."""
-    ratio = original_h / original_w
-    return int(ratio * target_width * scale_factor)
+    """
+    Calculate proportional height for ASCII rendering.
+    Uses common terminal aspect ratio correction (~0.43–0.55).
+    """
+    if original_width == 0:
+        return 0
+    aspect_ratio = original_height / original_width
+    return int(target_width * aspect_ratio * scale_factor)
 
 
-def scale_height_not_ratio(target_width: int, scale_factor: float = 0.55) -> int:
-    """Calcula la altura sin mantener relación de aspecto."""
-    return int(target_width * scale_factor)
-
-
-def calc_avg_brightness(red: int, green: int, blue: int) -> int:
-    """Calcula luminancia usando la fórmula NTSC."""
-    return int(0.299 * red + 0.587 * green + 0.114 * blue)
+def calc_avg_brightness(r: int, g: int, b: int) -> int:
+    """
+    Calculate perceived brightness (luminance) using NTSC formula.
+    Returns value in [0, 255].
+    """
+    return int(0.299 * r + 0.587 * g + 0.114 * b)
 
 
 def get_index_ascii(value: int, ascii_chars: str) -> str:
-    """Mapeo lineal de luminancia → índice del gradiente ASCII."""
+    """Linear map of luminance → index of ASCII gradient."""
     return ascii_chars[int(value / 255 * (len(ascii_chars) - 1))]
 
 
@@ -125,23 +163,23 @@ def get_index_ascii(value: int, ascii_chars: str) -> str:
 
 
 def rgb_to_ansi(r, g, b, char) -> str:
-    """Convierte un color RGB en un código ANSI TrueColor.
+    """Convert an RGB color to an ANSI TrueColor code.
 
-    Explicación técnica:
-    --------------------
-    - Los terminales modernos soportan colores en formato RGB real (TrueColor).
-    - El formato ANSI para colorear texto es:
+    Technical explanation:
+    ----------------------
+    - Modern terminals support colors in real RGB format (TrueColor).
+    - The ANSI format for coloring text is:
           \033[38;2;R;G;Bm
-      donde:
-        38  → indica que se cambia el color del texto
-        2   → indica que se usarán valores RGB reales
-        R,G,B → valores entre 0 y 255
+      where:
+        38  → indicates that the text color is being changed
+        2   → indicates that real RGB values will be used
+        R,G,B → values between 0 and 255
 
-    - Esta función simplemente inserta los valores RGB tal cual.
-      No hay transformación matemática: es un mapeo directo del vector de color:
+    - This function simply inserts the RGB values as-is.
+      There is no mathematical transformation: it is a direct mapping of the color vector:
           c = (r, g, b) ∈ ℝ³
 
-    - Se añade "\033[0m" al final para resetear el color del terminal.
+    - The string "\033[0m" is added at the end to reset the terminal color.
     """
 
     return f"\033[38;2;{r};{g};{b}m{char}\033[0m"
@@ -149,41 +187,52 @@ def rgb_to_ansi(r, g, b, char) -> str:
 
 def gray_to_ansi(gray, char) -> str:
     """
-    Convierte un valor de gris (0–255) en un color ANSI de la paleta de grises (232–255).
+    Convert a grayscale value (0–255) to an ANSI grayscale color (232–255).
 
-    Explicación matemática:
+    Mathematical explanation:
     -----------------------
-    Los terminales ANSI tienen una paleta fija de 24 tonos de gris:
+    ANSI terminals have a fixed palette of 24 shades of gray:
         {232, 233, ..., 255}
 
-    Para mapear un valor de gris (0–255) a ese rango discreto se hace:
+    To map a grayscale value (0–255) to that discrete range, do:
 
-        1) Normalización:
+        1) Normalization:
             n = gray / 255
-           (convierte el gris a un valor entre 0 y 1)
+           (converts the gray to a value between 0 and 1)
 
-        2) Escalado al rango de 24 niveles:
+        2) Scaling to the range of 24 levels:
             i = n * 23
-           (23 porque hay 24 tonos: 0–23)
+           (23 because there are 24 shades: 0–23)
 
-        3) Cuantización por truncamiento:
+        3) Quantization by truncation:
             i = floor(i)
 
-        4) Desplazamiento al rango ANSI real:
+        4) Offset to the actual ANSI range:
             color_code = 232 + i
 
-    Fórmula final:
+    Final formula:
         color_code = 232 + floor( (gray / 255) * 23 )
 
-    Esto implementa una transformación afín + cuantización,
-    equivalente a un shader de luminancia discreta.
+    This implements an affine transformation + quantization,
+    equivalent to a discrete luminance shader.
     """
     color_code = 232 + int(gray / 255 * 23)
     return f"\033[38;5;{color_code}m{char}\033[0m"
 
 
-def render_image(frame_ascii: str, save: bool = False) -> None:
-    print(frame_ascii)
+def render_image(
+    ascii_frame: str, save: bool = False, filename: Optional[str] = None
+) -> None:
+    """
+    Print ASCII frame to console.
+    Optionally save to file if save=True.
+    """
+    print(ascii_frame)
     if save:
-        with open("frame.txt", "w", encoding="utf-8") as f:
-            f.write(frame_ascii)
+        output_file = filename or f"ascii_output_{int(time.time())}.txt"
+        try:
+            with open(output_file, "w", encoding="utf-8") as f:
+                f.write(ascii_frame)
+            log_info(f"Saved to: {output_file}")
+        except Exception as e:
+            log_error(f"Failed to save file: {e}")
