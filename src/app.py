@@ -193,13 +193,13 @@ def handle_video(settings: Dict[str, Any], menu: QuestionsManager) -> None:
     message = f"Save the {len(frames_list)} frames as images and video?"
     if ask_save(menu, message=message):
         # Export frames to images
-        out_dir = "output_frames"
-        frames_to_images(frames_list, out_dir, font_path="assets/JetBrainsMonoNerdFont-Bold.ttf")
+        out_dir = "output/frames"
+        frames_to_images(frames_list, out_dir, font_path="assets/fonts/JetBrainsMonoNerdFont-Bold.ttf")
 
         print(Y + f"Saved frames to directory: {out_dir}")
 
         # Create video from images
-        video_path = "output_video.mp4"
+        video_path = "output/output_video.mp4"
         images_to_video(out_dir, video_path, fps=settings.get("fps", 12))
         print(Y + f"Saved video: {video_path}")
 
