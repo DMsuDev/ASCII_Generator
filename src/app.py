@@ -212,9 +212,7 @@ def show_section(banner: Banner, title: str, subtitle: str) -> None:
 
 @clear_screen
 def exit_program() -> None:
-    """Gracefully exit the application."""
-    print("Thank you for using ASCII Generator!")
-    print("Goodbye.")
+    """Exit the application."""
     raise SystemExit(0)
 
 
