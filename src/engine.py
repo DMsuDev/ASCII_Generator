@@ -153,8 +153,8 @@ class VideoProcessor(Processor):
         h, w = gray.shape
         new_height = scale_height(
             target_width=new_width,
-            original_w=w,
-            original_h=h,
+            original_width=w,
+            original_height=h,
             scale_factor=self._scale_factor,
         )
 
