@@ -1,11 +1,11 @@
-from typing import Union
+from typing import Any, Callable, Dict
 from cli.questions_manager import QuestionsManager
 from cli.banner import Banner
 
-from engine import ImageProcessor, VideoProcessor, Processor, FileValidator
+from processor import FrameProcessor, Processor, FileValidator
 
-from settings.config import DEFAULT_SETTINGS, GRADIENT, MODE
-from data.json_manager import JsonManager
+from settings.config import DEFAULT_SETTINGS, normalize_runtime_settings
+from data.config_manager import ConfigManager
 
 from utils import clear_console, clear_screen, get_source_via_dialog, render_image
 from cli.styles import R, Y
@@ -14,24 +14,27 @@ from cli.styles import R, Y
 #                     MAIN APPLICATION
 # ============================================================
 
-SETTINGS: dict = {}
-
 
 def main() -> None:
-    global SETTINGS
+    """
+    Entry point of the ASCII Generator application.
+    Orchestrates menu navigation and settings management.
+    """
 
     banner: Banner = Banner()
     menu: QuestionsManager = QuestionsManager()
-    data_manager: JsonManager = JsonManager(
-        json_name="config.json", default=DEFAULT_SETTINGS, input_func=menu.ask_text
+
+    # Initialize config manager with defaults and custom input handler
+    config_manager: ConfigManager = ConfigManager(
+        file_name="config.json",
+        default_config=DEFAULT_SETTINGS,
+        interactive_input=menu.ask_text,
     )
 
-    SETTINGS = load_settings(data_manager)
-
-    ROUTES = {
-        "init": lambda: handle_init(menu, banner, SETTINGS),
-        "settings": lambda: update_settings(menu, data_manager, banner),
-        "exit": lambda: exit_program(),
+    routes: Dict[str, Callable] = {
+        "init": lambda: handle_init(menu, banner, config_manager),
+        "settings": lambda: handle_settings_update(menu, config_manager, banner),
+        "exit": exit_program,
     }
 
     while True:
@@ -40,14 +43,16 @@ def main() -> None:
 
         answer = menu.get_menu("main")
         if not answer or "option" not in answer:
-            print(R + "Entrada inválida, intenta de nuevo.")
+            print(R + "Invalid input, try again.")
             continue
 
         option = answer["option"]
-        if option in ROUTES:
-            ROUTES[option]()
+        handler = routes.get(option)
+
+        if handler:
+            handler()
         else:
-            print(R + f"Opción desconocida: {option}")
+            print(R + f"Unknown option: {option}")
 
 
 # ============================================================
@@ -56,139 +61,161 @@ def main() -> None:
 
 
 @clear_screen
-def handle_init(manager: QuestionsManager, banner: Banner, settings: dict = {}):
-    show_section(banner, title="ASCII ENGINE", subtitle="MODE INPUT")
+def handle_init(
+    menu: QuestionsManager,
+    banner: Banner,
+    config_manager: ConfigManager,
+) -> None:
+    """Handle selection of input source mode (loads settings at call time)."""
+    # Reload runtime settings each time user enters the Init menu
+    settings = load_and_normalize_settings(config_manager)
 
-    answer = manager.get_menu("init")
+    show_section(banner, title="ASCII ENGINE", subtitle="INPUT MODE")
+
+    answer = menu.get_menu("init")
     if not answer or "option" not in answer:
-        print("Entrada inválida, intenta de nuevo.")
+        print(R + "Invalid selection, returning to main menu.")
         return
 
-    match answer["option"]:
+    mode = answer["option"]
+    match mode:
         case "camera":
-            handle_Camera(settings, manager)
+            handle_camera(settings)
         case "image":
-            handle_Image(settings, manager)
+            handle_image(settings, menu)
         case "video":
-            handle_Video(settings, manager)
+            handle_video(settings, menu)
         case "back":
             return
+        case _:
+            print(R + f"Unknown mode: {mode}")
+
 
 
 @clear_screen
-def handle_settings(
-    manager: QuestionsManager, saveManager: JsonManager, banner: Banner
-):
-    global SETTINGS
+def handle_settings_update(
+    menu: QuestionsManager,
+    config_manager: ConfigManager,
+    banner: Banner,
+) -> None:
+    """Update settings interactively and save them."""
+    show_section(banner, title="ASCII ENGINE", subtitle="SETTINGS")
 
-    clear_console()
-    show_section(banner, title="ASCII ENGINE", subtitle="CONFIGURATION")
+    print("Current settings:")
+    for key, value in config_manager.data.items():
+        print(f"  {key}: {value}")
 
-    raw_answers = manager.get_menu("settings")
-    saveManager.save(data=raw_answers)
+    new_answers = menu.get_menu("settings")
+    if new_answers:
+        config_manager.update(new_answers, save_immediately=True)
+        print("\nSettings updated and saved.")
 
-    SETTINGS = normalize_settings(saveManager.load())
-    print(SETTINGS)
+    # Reload normalized settings (though not strictly needed here)
+    updated = load_and_normalize_settings(config_manager)
+    print("Runtime values:", updated)
 
-    print("\nConfiguración guardada:")
-    input("Presiona ENTER para continuar...")
+    input("\nPress ENTER to return...")
 
 
 # ============================================================
-#                     CORE HANDLERS
+#                     CORE PROCESSING HANDLERS
 # ============================================================
 
 
-@clear_screen
-def handle_processing(processor: Processor, source: Union[str, int]) -> None:
-    ascii_art: str = processor.run(source)
-    print(ascii_art)
-    input("Presiona ENTER para continuar...")
+def create_processor(settings: Dict[str, Any]) -> Processor:
+    """
+    Factory function to create the appropriate processor
+    based on shared settings (avoids duplication).
+    """
+    validator = FileValidator()
+
+    common_params = {
+        "target_width": settings["width"],
+        "scale": settings["scale_factor"],
+        "sequence": settings["gradient"],
+        "mode": settings["mode"],
+        "invert": False,  # can be made configurable later
+        "mirror": False,  # can be made configurable later
+        "validator": validator,
+    }
+
+    # For now we use VideoProcessor for both camera and video
+    # (since camera is just video source=0)
+    return FrameProcessor(**common_params)
 
 
 @clear_screen
-def handle_Image(settings, manager: QuestionsManager) -> None:
-    validator: FileValidator = FileValidator()
-    processor: Processor = ImageProcessor(
-        target_width=settings["width"],
-        scale=settings["scale_factor"],
-        sequence=settings["gradient"],
-        mode=settings["mode"],
-        invert=False,
-        mirror=False,
-        validator=validator,
-    )
-    ascii_art: str = processor.run(get_source_via_dialog(False))
-    render_image(ascii_art, ask_Save(manager))
-    input("Presiona ENTER para continuar...")
+def handle_image(settings: Dict[str, Any], menu: QuestionsManager) -> None:
+    """Process a single static image."""
+    processor = create_processor(settings)
+    source = get_source_via_dialog(is_video=False)
+
+    if not source:
+        print(Y + "No file selected.")
+        return
+
+    ascii_art = processor.start(source)
+    if ask_save(menu):
+        # TODO: allow user to choose filename/path
+        render_image(ascii_art, True)
+
+    input("\nPress ENTER to continue...")
 
 
 @clear_screen
-def handle_Camera(settings: dict, manager: QuestionsManager) -> None:
-    validator: FileValidator = FileValidator()
-    processor: Processor = VideoProcessor(
-        target_width=settings["width"],
-        scale=settings["scale_factor"],
-        sequence=settings["gradient"],
-        mode=settings["mode"],
-        invert=False,
-        mirror=False,
-        validator=validator,
-    )
-    handle_processing(processor, 0)
+def handle_camera(settings: Dict[str, Any]) -> None:
+    """Process live webcam feed."""
+    processor = create_processor(settings)
+    processor.start(0)  # 0 = default camera
 
 
 @clear_screen
-def handle_Video(settings: dict, manager: QuestionsManager) -> None:
-    validator: FileValidator = FileValidator()
-    processor: Processor = VideoProcessor(
-        target_width=settings["width"],
-        scale=settings["scale_factor"],
-        sequence=settings["gradient"],
-        mode=settings["mode"],
-        invert=False,
-        mirror=False,
-        validator=validator,
-    )
-    handle_processing(processor, get_source_via_dialog(True))
+def handle_video(settings: Dict[str, Any], menu: QuestionsManager) -> None:
+    """Process a video file."""
+    processor = create_processor(settings)
+    source = get_source_via_dialog(is_video=True)
+
+    if not source:
+        print(Y + "No video selected.")
+        return
+
+    processor.start(source)
 
 
 # ============================================================
-#                     SETTINGS HELPERS
+#                     SETTINGS & UTILITY HELPERS
 # ============================================================
 
 
-def update_settings(menu: QuestionsManager, data: JsonManager, banner: Banner):
-    new_settings = handle_settings(menu, data, banner)
-    return new_settings
+def load_and_normalize_settings(config_manager: ConfigManager) -> Dict[str, Any]:
+    """Load config and convert to runtime-ready format with enums."""
+    raw = config_manager.load()
+    return normalize_runtime_settings(raw)
 
 
-def load_settings(manager: JsonManager) -> dict:
-    setting = manager.load()
-    setting["mode"] = MODE[setting["mode"]]
-    setting["gradient"] = GRADIENT[str(setting["gradient"])]
-    return setting
-
-
-def normalize_settings(settings: dict) -> dict:
-    new_dict: dict = settings
-    new_dict["mode"] = MODE[new_dict["mode"]]
-    new_dict["gradient"] = GRADIENT[new_dict["gradient"]]
-    return new_dict
-
-
-def ask_Save(manager: QuestionsManager) -> bool:
-    answer: str = manager.ask_list(
-        message="Desea salvar la imagen en un archivo?",
-        choices=[(Y + "Si", "1"), (Y + "No", "0")],
-        default="No",
+def ask_save(menu: QuestionsManager) -> bool:
+    """Ask if user wants to save the generated ASCII art."""
+    answer = menu.ask_list(
+        message="Save the ASCII art to a file?",
+        choices=[(Y + "Yes", "1"), (Y + "No", "0")],
+        default="0",
     )
-    return True if answer == "1" else False
+    return answer == "1"
 
 
 @clear_screen
-def show_section(banner: Banner, title: str, subtitle: str):
+def show_section(banner: Banner, title: str, subtitle: str) -> None:
+    """Display section header with banner."""
     banner.show(title, subtitle)
+    # banner.footer()  # opcional, si quieres el footer en cada sección
+
+
+@clear_screen
+def exit_program() -> None:
+    """Gracefully exit the application."""
+    print("Thank you for using ASCII Generator!")
+    print("Goodbye.")
+    raise SystemExit(0)
 
 
 # ============================================================
@@ -196,10 +223,11 @@ def show_section(banner: Banner, title: str, subtitle: str):
 # ============================================================
 
 
-def exit_program():
-    print("Saliendo...")
-    raise SystemExit
-
-
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nInterrupted by user. Exiting...")
+    except Exception as e:
+        print(R + f"Unexpected error: {str(e)}")
+        raise
