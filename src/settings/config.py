@@ -49,10 +49,70 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     # Rendering options
     "mode": MODE.RGB.name,  # Must be a valid MODE.name (str)
     "gradient": GRADIENT.DETAILED.name,  # Must be a valid GRADIENT.name (str)
-    
+
     # Future / optional settings (can be added later)
     # "invert": False,
     # "mirror": False,
     # "charset_custom": None,
     # "output_dir": "./output",
 }
+
+# =====================================================
+#          HELPER FUNCTIONS FOR CONFIG HANDLING
+# =====================================================
+
+
+def get_mode_from_name(name: str) -> MODE:
+    """
+    Safely convert string mode name to MODE enum.
+    Returns MODE.RGB as fallback on invalid value.
+    """
+    try:
+        return MODE[name.upper()]
+    except (KeyError, ValueError):
+        print(f"[WARN] Invalid mode '{name}', falling back to RGB")
+        return MODE.RGB
+
+
+def get_gradient_from_name(name: str) -> GRADIENT:
+    """
+    Safely convert string gradient name to GRADIENT enum.
+    Returns GRADIENT.DETAILED as fallback on invalid value.
+    """
+    try:
+        return GRADIENT[name.upper()]
+    except (KeyError, ValueError):
+        print(f"[WARN] Invalid gradient '{name}', falling back to DETAILED")
+        return GRADIENT.DETAILED
+
+
+def normalize_runtime_settings(raw_settings: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Convert raw config (from JSON) to runtime-ready dict with enums.
+    Used after ConfigManager.load()
+    """
+    normalized = raw_settings.copy()
+
+    # Convert string names → enum instances
+    if "mode" in normalized:
+        normalized["mode"] = get_mode_from_name(normalized["mode"])
+
+    if "gradient" in normalized:
+        normalized["gradient"] = get_gradient_from_name(normalized["gradient"])
+
+    # Ensure numeric types (in case JSON loaded them as str)
+    for key in ["fps", "width"]:
+        if key in normalized:
+            try:
+                normalized[key] = int(normalized[key])
+            except (ValueError, TypeError):
+                normalized[key] = DEFAULT_SETTINGS[key]
+
+    for key in ["scale_factor"]:
+        if key in normalized:
+            try:
+                normalized[key] = float(normalized[key])
+            except (ValueError, TypeError):
+                normalized[key] = DEFAULT_SETTINGS[key]
+
+    return normalized
