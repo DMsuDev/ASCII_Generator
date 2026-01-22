@@ -1,8 +1,8 @@
 import inquirer
 from typing import Any, Dict, List, Optional
 
-from src.cli.menus import MENUS
-from src.cli.styles import R
+from cli.menus import MENUS
+from cli.styles import R
 
 
 class QuestionsManager:
