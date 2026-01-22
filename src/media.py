@@ -21,7 +21,6 @@ from PIL import Image, ImageDraw, ImageFont
 import imageio
 
 import time
-from utils import log_info, log_error
 
 ESC_SGR = re.compile(r"\x1b\[([^m]*)m")
 
@@ -176,9 +175,9 @@ def frame_to_text(ascii_frame: str, filename: Optional[str] = None) -> None:
     try:
         with open(output_file, "w", encoding="utf-8") as f:
             f.write(ascii_frame)
-        log_info(f"Saved to: {output_file}")
+        print(f"Saved to: {output_file}")
     except Exception as e:
-        log_error(f"Failed to save file: {e}")
+        print(f"Failed to save file: {e}")
 
 
 def frames_to_images(

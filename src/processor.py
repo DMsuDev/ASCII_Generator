@@ -12,7 +12,6 @@ from colorama import Fore, Style
 from utils import (
     clear_console,
     get_index_ascii,
-    log_warning,
     rgb_to_ansi,
     gray_to_ansi,
     scale_height,
@@ -41,7 +40,7 @@ def get_interpolation_method(method_name: str) -> int:
     try:
         return INTERPOLATION[method_name.upper()].value
     except KeyError:
-        log_warning(f"Unknown interpolation '{method_name}', using LINEAR")
+        print(f"Unknown interpolation '{method_name}', using LINEAR")
         return cv2.INTER_LINEAR
 
 

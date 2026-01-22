@@ -3,7 +3,6 @@ import shutil
 from functools import wraps
 from pathlib import Path
 
-from colorama import Fore, Style
 from tkinter import Tk, filedialog
 
 
@@ -100,26 +99,6 @@ def limit_fps(start_time: float, target_fps: int) -> None:
 
     if elapsed < frame_duration:
         time.sleep(frame_duration - elapsed)
-
-
-# ============================
-#   LOGGING HELPERS
-# ============================
-
-
-def log_info(msg: str) -> None:
-    """Print info message in cyan."""
-    print(f"{Fore.CYAN}[INFO]{Style.RESET_ALL} {msg}")
-
-
-def log_warning(msg: str) -> None:
-    """Print warning message in yellow."""
-    print(f"{Fore.YELLOW}[WARN]{Style.RESET_ALL} {msg}")
-
-
-def log_error(msg: str) -> None:
-    """Print error message in red."""
-    print(f"{Fore.RED}[ERROR]{Style.RESET_ALL} {msg}")
 
 
 # ============================
