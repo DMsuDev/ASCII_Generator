@@ -1,6 +1,6 @@
 from os import get_terminal_size
 from pyfiglet import Figlet, FontNotFound
-from src.cli.styles import C, Y, G, W  # Colores que definiste en styles.py
+from cli.styles import C, Y, G, W  # Colores que definiste en styles.py
 
 
 class Banner:

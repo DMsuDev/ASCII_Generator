@@ -11,7 +11,7 @@ import time
 import numpy as np
 import os
 
-from src.utils import (
+from utils import (
     clear_console,
     get_index_ascii,
     calc_avg_brightness,
@@ -20,8 +20,8 @@ from src.utils import (
     scale_height,
     get_terminal_size,
 )
-from src.settings.config import MODE, GRADIENT
-from src.cli.styles import R
+from settings.config import MODE, GRADIENT
+from cli.styles import R
 
 
 class FileValidator:

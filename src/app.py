@@ -1,14 +1,14 @@
 from typing import Union
-from src.cli.questions_manager import QuestionsManager
-from src.cli.banner import Banner
+from cli.questions_manager import QuestionsManager
+from cli.banner import Banner
 
-from src.engine import ImageProcessor, VideoProcessor, Processor, FileValidator
+from engine import ImageProcessor, VideoProcessor, Processor, FileValidator
 
-from src.settings.config import DEFAULT_SETTINGS, GRADIENT, MODE
-from src.data.json_manager import JsonManager
+from settings.config import DEFAULT_SETTINGS, GRADIENT, MODE
+from data.json_manager import JsonManager
 
-from src.utils import clear_console, clear_screen, get_source_via_dialog, render_image
-from src.cli.styles import R, Y
+from utils import clear_console, clear_screen, get_source_via_dialog, render_image
+from cli.styles import R, Y
 
 # ============================================================
 #                     MAIN APPLICATION

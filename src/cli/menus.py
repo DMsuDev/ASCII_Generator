@@ -1,4 +1,4 @@
-from src.cli.styles import Y
+from cli.styles import Y
 
 MENUS = {
     "main": {
