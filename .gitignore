@@ -1,6 +1,25 @@
-.vscode/
-config.json
 __pycache__/
-*.pyc
+config.json
 frame.txt
-.venv
+test/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Cache
+.cache/
+.pytest_cache/
+
+# IDEs / Editors
+.vscode/
+.idea/
+
+# Local settings
+*.env
+
+# Virtual environments
+venv/
+.venv/
