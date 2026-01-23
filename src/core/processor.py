@@ -18,7 +18,7 @@ from utils import (
     get_terminal_size,
 )
 from settings.modes import Mode
-from settings.gradients import Gradient
+from settings.gradients import Gradient, get_gradient_ramp
 
 from cli.styles import R
 
@@ -60,7 +60,7 @@ class Processor(ABC):
     ):
         self.target_width = int(target_width)
         self.scale_factor = float(scale)
-        self.gradient = str(sequence.value)
+        self.gradient = get_gradient_ramp(sequence)
         self.mode = mode
         self.invert = invert
         self.mirror = mirror
@@ -87,7 +87,7 @@ class FrameProcessor(Processor):
     def process_frame(self, frame: np.ndarray) -> str:
         if frame is None or frame.size == 0:
             return ""
-
+        
         if len(frame.shape) != 3:
             # caso muy raro: imagen grayscale desde el principio
             frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
