@@ -30,6 +30,10 @@ def remove_pycache_folders(start_path: Path) -> tuple[int, int]:
     for pycache_dir in start_path.rglob("__pycache__"):
         if not pycache_dir.is_dir():
             continue
+        
+        # Ignore folder .venv
+        if ".venv" in pycache_dir.parts:
+            continue
 
         try:
             shutil.rmtree(pycache_dir, ignore_errors=False)
