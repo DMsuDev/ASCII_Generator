@@ -15,6 +15,13 @@
   <em>Interactive terminal interface with real-time preview</em>
 </p>
 
+## 🛠️ Things to fix / improve
+
+- [ ] Fix video speed synchronization issues
+- [ ] Implement logger for debugging
+- [ ] Optimize performance for higher resolutions
+- [ ] Add custom character sets and styles
+
 ## 📖 Table of Contents
 
 - [✨ Features](#-features)
