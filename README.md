@@ -18,7 +18,7 @@
 ## 🛠️ Things to fix / improve
 
 - **[*] Fix video speed synchronization issues**: the video FPS detection was causing desync between video playback and ASCII rendering speed.
-- [ ] View problems with sizing videos on exporting to file
+- **[*] View problems with sizing videos on exporting to file:** only change the aspect ratio, it's recommended the default settings be used for best results. (0.50f)
 - [ ] Implement logger for debugging
 - [ ] Optimize performance for higher resolutions
 - [ ] Add custom character sets and styles
