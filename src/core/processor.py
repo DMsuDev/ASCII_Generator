@@ -89,13 +89,12 @@ class FrameProcessor(Processor):
             return ""
         
         if len(frame.shape) != 3:
-            # caso muy raro: imagen grayscale desde el principio
             frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
         elif frame.shape[2] == 4:
-            # Quitar canal alfa (muy común en PNGs)
+            # Remove alpha channel (common in PNGs)
             frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
         elif frame.shape[2] != 3:
-            raise ValueError(f"Formato de frame no soportado: {frame.shape}")
+            raise ValueError(f"Unsupported frame format: {frame.shape}")
         
         if self.invert:
             frame = cv2.bitwise_not(frame)
@@ -138,26 +137,29 @@ class FrameProcessor(Processor):
         if not cap.isOpened():
             raise RuntimeError(R + "Failed to open video/camera source")
 
-        frame_count = 0
-        start_time = time.time()
-        last_fps_time = start_time
+        # Get native video FPS; if unavailable don't throttle
+        video_fps = cap.get(cv2.CAP_PROP_FPS) or 0.0
 
+        # If video_fps is valid, compute the target time per frame. If it's
+        # invalid or too small, keep `frame_interval` as None
+        frame_interval = 1.0 / video_fps if video_fps and video_fps > 0.001 else None
+
+        # Monotonic timer for measuring display intervals
+        prev_display_time = time.perf_counter()
+
+        # Exponential moving average value shown to the user
+        smoothed_fps: Optional[float] = None
+
+        # EMA alpha (0..1): higher = more responsive, lower = smoother
+        fps_smoothing_alpha = 0.2
         try:
             while True:
                 ret, frame = cap.read()
                 if not ret:
                     break  # end of video
 
-                frame_count += 1
-                now = time.time()
-
-                # Calculate FPS every second
-                if now - last_fps_time >= 1.0:
-                    fps = frame_count / (now - last_fps_time)
-                    frame_count = 0
-                    last_fps_time = now
-                else:
-                    fps = None
+                # Iteration start to compute processing+render time
+                iter_start = time.perf_counter()
 
                 ascii_art.append(self.process_frame(frame))
                 ascii_art_str = ascii_art[-1]
@@ -165,8 +167,31 @@ class FrameProcessor(Processor):
                 clear_console()
                 print(ascii_art_str if ascii_art_str else "Error: No ASCII frame to render.")
 
-                if fps is not None:
-                    print(f"{Fore.CYAN}{Style.BRIGHT}FPS: {fps:.1f}")
+                # Update/display smoothed FPS. If we have a target
+                # `frame_interval`, sleep the remaining time to match it.
+                if smoothed_fps is None:
+                    now_display = time.perf_counter()
+                    dt = now_display - prev_display_time
+                    smoothed_fps = 1.0 / dt if dt > 0 else 0.0
+                    prev_display_time = now_display
+                else:
+                    # Throttle to native FPS when available
+                    if frame_interval is not None:
+                        elapsed = time.perf_counter() - iter_start
+                        to_sleep = frame_interval - elapsed
+                        if to_sleep > 0:
+                            time.sleep(to_sleep)
+
+                    now_display = time.perf_counter()
+                    dt = now_display - prev_display_time
+                    if dt > 0:
+                        inst_fps = 1.0 / dt
+                        smoothed_fps = fps_smoothing_alpha * inst_fps + (1 - fps_smoothing_alpha) * smoothed_fps
+                    prev_display_time = now_display
+
+                # Print the (possibly smoothed) FPS value for user feedback.
+                if smoothed_fps is not None:
+                    print(f"{Fore.CYAN}{Style.BRIGHT}FPS: {smoothed_fps:.1f}")
 
                 print(f"{Fore.YELLOW}{Style.BRIGHT}Press 'q' or ESC to exit...")
 

@@ -17,7 +17,7 @@
 
 ## 🛠️ Things to fix / improve
 
-- [ ] Fix video speed synchronization issues
+- **[*] Fix video speed synchronization issues**: the video FPS detection was causing desync between video playback and ASCII rendering speed.
 - [ ] Implement logger for debugging
 - [ ] Optimize performance for higher resolutions
 - [ ] Add custom character sets and styles
