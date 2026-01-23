@@ -12,15 +12,15 @@ The ANSI parser implemented is conservative but supports TrueColor SGR
 
 from __future__ import annotations
 
-import re
-from pathlib import Path
-import colorsys
 from typing import List, Optional, Sequence, Tuple, Union
-
 from PIL import Image, ImageDraw, ImageFont
-import imageio
+from pathlib import Path
+from tqdm import tqdm
 
+import colorsys
+import imageio
 import time
+import re
 
 ESC_SGR = re.compile(r"\x1b\[([^m]*)m")
 
@@ -211,8 +211,15 @@ def frames_to_images(
     except Exception:
         font = ImageFont.load_default()
 
+    bar_format="{l_bar}{bar} | {percentage:3.0f}% | {n_fmt}/{total_fmt} | {elapsed} → {remaining}"
+
     created: List[str] = []
-    for i, frame in enumerate(frames):
+    for i, frame in tqdm(
+        enumerate(frames),
+        bar_format=bar_format,
+        total=len(frames),
+        desc="Converting frames to images",
+    ):
         grid = _parse_ansi_to_grid(frame, default_fg, default_bg)
 
         if not grid:

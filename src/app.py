@@ -1,4 +1,4 @@
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 from cli.questions_manager import QuestionsManager
 from cli.banner import Banner
 
@@ -33,13 +33,12 @@ def main() -> None:
         default_config=DEFAULT_RAW_SETTINGS,
         interactive_input=menu.ask_text,
     )
-    
+
     routes: Dict[str, Callable] = {
         "init": lambda: handle_init(menu, banner, config_manager),
         "settings": lambda: handle_settings_update(menu, config_manager, banner),
         "exit": exit_program,
     }
-
 
     while True:
         clear_console()
@@ -84,7 +83,7 @@ def handle_init(
     mode = answer["option"]
     match mode:
         case "camera":
-            handle_camera(settings)
+            handle_camera(settings, menu)
         case "image":
             handle_image(settings, menu)
         case "video":
@@ -166,10 +165,26 @@ def handle_image(settings: AppSettings, menu: QuestionsManager) -> None:
 
 
 @clear_screen
-def handle_camera(settings: AppSettings) -> None:
+def handle_camera(settings: AppSettings, menu: QuestionsManager) -> None:
     """Process live webcam feed."""
     processor = create_processor(settings)
-    processor.start(0)  # 0 = default camera
+
+    ascii_art: str = processor.start(0)  # 0 = default camera
+    # try to recover list of frames (processor returns joined string separated by blank line)
+    frames_list: list[str] = []
+    if isinstance(ascii_art, str):
+        frames_list = ascii_art.split("\n\n") if ascii_art else []
+    else:
+        try:
+            frames_list = list(ascii_art)
+        except Exception:
+            frames_list = []
+
+    message = f"Save the {len(frames_list)} frames as images and video?"
+    if ask_save(menu, message=message):
+        save_video(frames_list, settings)
+
+    input("\nPress ENTER to continue...")
 
 
 @clear_screen
@@ -195,22 +210,13 @@ def handle_video(settings: AppSettings, menu: QuestionsManager) -> None:
 
     message = f"Save the {len(frames_list)} frames as images and video?"
     if ask_save(menu, message=message):
-        # Export frames to images
-        out_dir = "output/frames"
-        frames_to_images(frames_list, out_dir, font_path="assets/fonts/JetBrainsMonoNerdFont-Bold.ttf")
-
-        print(Y + f"Saved frames to directory: {out_dir}")
-
-        # Create video from images
-        video_path = "output/output_video.mp4"
-        images_to_video(out_dir, video_path, fps=getattr(settings, "fps", 12))
-        print(Y + f"Saved video: {video_path}")
+        save_video(frames_list, settings)
 
     input("\nPress ENTER to continue...")
 
 
 # ============================================================
-#                     SETTINGS & UTILITY HELPERS
+#                  SETTINGS & UTILITY HELPERS
 # ============================================================
 
 
@@ -230,6 +236,27 @@ def ask_save(
         default="0",
     )
     return answer == "1"
+
+
+# ============================================================
+#                  MEDIA HANDLING FUNCTIONS
+# ============================================================
+
+
+def save_video(frames_list: list[str], settings: AppSettings) -> None:
+    """Save the processed frames as a video file."""
+    # Export frames to images
+    out_dir = "output/frames"
+    frames: List[str] = frames_to_images(
+        frames_list, out_dir, font_path="assets/fonts/JetBrainsMonoNerdFont-Bold.ttf"
+    )
+
+    print(Y + f"\nSaved frames to directory: {out_dir}")
+
+    # Create video from images
+    video_path = "output/output_video.mp4"
+    images_to_video(frames, video_path, fps=getattr(settings, "fps", 12))
+    print(Y + f"Saved video: {video_path}")
 
 
 @clear_screen
