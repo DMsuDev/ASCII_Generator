@@ -1,4 +1,8 @@
 from enum import Enum, auto
+from log.logconfig import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class Mode(Enum):
@@ -22,6 +26,10 @@ def get_mode(name: str) -> Mode:
     try:
         return Mode[name]
     except KeyError:
-        print(f"Unrecognized mode: {name}. Valid values: {', '.join(m.name for m in Mode)}")
+        logger.warning(
+            "Unrecognized mode: %s. Valid values: %s",
+            name,
+            ", ".join(m.name for m in Mode),
+        )
         return Mode.RGB
     

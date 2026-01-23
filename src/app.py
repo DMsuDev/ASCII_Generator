@@ -1,8 +1,9 @@
-from typing import Callable, Dict, List
+from pathlib import Path
+from typing import Any, Callable, Dict, List
 from cli.questions_manager import QuestionsManager
 from cli.banner import Banner
 
-from core.processor import FrameProcessor, Processor
+from core.processor import FrameProcessor
 from core.validator import FileValidator
 
 from settings.defaults import DEFAULT_RAW_SETTINGS
@@ -10,285 +11,202 @@ from settings.loader import AppSettings
 from settings.manager import SettingsManager
 
 from utils import clear_console, clear_screen, get_source_via_dialog
-from cli.styles import R, Y
 from media.media import frame_to_text, frames_to_images, images_to_video
 
-# ============================================================
-#                     MAIN APPLICATION
-# ============================================================
+from log.logconfig import get_logger
 
 
-def main() -> None:
+class AppEngine:
     """
-    Entry point of the ASCII Generator application.
+    Main application engine for the ASCII Generator.
     Orchestrates menu navigation and settings management.
     """
 
-    banner: Banner = Banner()
-    menu: QuestionsManager = QuestionsManager()
+    def __init__(self) -> None:
+        self.logger = get_logger(__name__)
 
-    # Initialize config manager with defaults and custom input handler
-    config_manager: SettingsManager = SettingsManager(
-        file_name="config.json",
-        default_config=DEFAULT_RAW_SETTINGS,
-        interactive_input=menu.ask_text,
-    )
+        self.banner: Banner = Banner()
+        self.menu: QuestionsManager = QuestionsManager()
 
-    routes: Dict[str, Callable] = {
-        "init": lambda: handle_init(menu, banner, config_manager),
-        "settings": lambda: handle_settings_update(menu, config_manager, banner),
-        "exit": exit_program,
-    }
-
-    while True:
-        clear_console()
-        show_section(banner=banner, title="ASCII ENGINE", subtitle="GENERATOR")
-
-        answer = menu.get_menu("main")
-        if not answer or "option" not in answer:
-            print(R + "Invalid input, try again.")
-            continue
-
-        option = answer["option"]
-        handler = routes.get(option)
-
-        if handler:
-            handler()
-        else:
-            print(R + f"Unknown option: {option}")
-
-
-# ============================================================
-#                     MENU HANDLERS
-# ============================================================
-
-
-@clear_screen
-def handle_init(
-    menu: QuestionsManager,
-    banner: Banner,
-    config_manager: SettingsManager,
-) -> None:
-    """Handle selection of input source mode (loads settings at call time)."""
-    # Reload runtime settings each time user enters the Init menu
-    settings = load_settings(config_manager)
-
-    show_section(banner, title="ASCII ENGINE", subtitle="INPUT MODE")
-
-    answer = menu.get_menu("init")
-    if not answer or "option" not in answer:
-        print(R + "Invalid selection, returning to main menu.")
-        return
-
-    mode = answer["option"]
-    match mode:
-        case "camera":
-            handle_camera(settings, menu)
-        case "image":
-            handle_image(settings, menu)
-        case "video":
-            handle_video(settings, menu)
-        case "back":
-            return
-        case _:
-            print(R + f"Unknown mode: {mode}")
-
-
-@clear_screen
-def handle_settings_update(
-    menu: QuestionsManager,
-    config_manager: SettingsManager,
-    banner: Banner,
-) -> None:
-    """Update settings interactively and save them."""
-    show_section(banner, title="ASCII ENGINE", subtitle="SETTINGS")
-
-    print("Current settings:")
-    for key, value in config_manager.data.items():
-        print(f"  {key}: {value}")
-
-    new_answers = menu.get_menu("settings")
-    if new_answers:
-        config_manager.update(new_answers, save_immediately=True)
-        print("\nSettings updated and saved.")
-
-    # Reload normalized settings (though not strictly needed here)
-    updated = load_settings(config_manager)
-    print("Runtime values:", updated)
-
-    input("\nPress ENTER to return...")
-
-
-# ============================================================
-#                     CORE PROCESSING HANDLERS
-# ============================================================
-
-
-def create_processor(settings: AppSettings) -> Processor:
-    """
-    Factory function to create the appropriate processor
-    based on shared settings (avoids duplication).
-    """
-    validator = FileValidator()
-
-    common_params = {
-        "target_width": settings.width,
-        "scale": settings.scale_factor,
-        "sequence": settings.gradient,
-        "mode": settings.mode,
-        "invert": False,  # can be made configurable later
-        "mirror": False,  # can be made configurable later
-        "validator": validator,
-    }
-
-    # For now we use VideoProcessor for both camera and video
-    # (since camera is just video source=0)
-    return FrameProcessor(**common_params)
-
-
-@clear_screen
-def handle_image(settings: AppSettings, menu: QuestionsManager) -> None:
-    """Process a single static image."""
-    processor = create_processor(settings)
-    source = get_source_via_dialog(is_video=False)
-
-    if not source:
-        print(Y + "No file selected.")
-        return
-
-    ascii_art = processor.start(source)
-    if ask_save(menu):
-        # TODO: allow user to choose filename/path
-        frame_to_text(ascii_art, filename="ascii_image_output.txt")
-    
-    if ask_save(menu, message="Save the ASCII art as images?"):
-        frames_to_images(
-            [ascii_art],
-            out_dir="output/static_image_frames",
-            font_path="assets/fonts/JetBrainsMonoNerdFont-Bold.ttf",
+        self.settings: AppSettings
+        self.config_manager: SettingsManager = SettingsManager(
+            file_name="config.json",
+            default_config=DEFAULT_RAW_SETTINGS,
+            interactive_input=self.menu.ask_text,
         )
+        self.routes: Dict[str, Callable] = {
+            "init": self.run_init_menu,
+            "settings": self.run_settings_menu,
+            "exit": self.exit_program,
+        }
 
-    input("\nPress ENTER to continue...")
+    def run(self) -> None:
+        """
+        Main loop logic for the application.
+        Handles menu navigation and user input.
+        """
 
+        self.logger.debug("Starting ASCII Generator application.")
 
-@clear_screen
-def handle_camera(settings: AppSettings, menu: QuestionsManager) -> None:
-    """Process live webcam feed."""
-    processor = create_processor(settings)
-
-    ascii_art: str = processor.start(0)  # 0 = default camera
-    # try to recover list of frames (processor returns joined string separated by blank line)
-    frames_list: list[str] = []
-    if isinstance(ascii_art, str):
-        frames_list = ascii_art.split("\n\n") if ascii_art else []
-    else:
         try:
-            frames_list = list(ascii_art)
-        except Exception:
-            frames_list = []
+            while True:
+                clear_console()
+                self.banner.show("ASCII ENGINE", "GENERATOR")
+                try:
+                    answers = self.menu.run_menu("main")
+                except ValueError:
+                    return
 
-    message = f"Save the {len(frames_list)} frames as images and video?"
-    if ask_save(menu, message=message):
-        save_video(frames_list, settings)
+                if not answers or "option" not in answers:
+                    self.logger.warning(f"Empty or invalid selection: {answers}")
+                    continue
 
-    input("\nPress ENTER to continue...")
+                handler = self.routes.get(answers["option"], None)
+                if handler:
+                    handler()
+                else:
+                    self.logger.warning(f"Unknown option: {answers['option']}")
+                    continue
+        except KeyboardInterrupt:
+            self.exit_program()
 
+        except Exception as e:
+            self.logger.error(f"An unexpected error occurred: {e}")
+            raise
 
-@clear_screen
-def handle_video(settings: AppSettings, menu: QuestionsManager) -> None:
-    """Process a video file."""
-    processor = create_processor(settings)
-    source = get_source_via_dialog(is_video=True)
+    def _create_handler(self, source: str | int, is_video: bool) -> None:
+        """Create and run the appropriate processor based on source type."""
+        self.logger.debug("Creating handler for source: %s", source)
 
-    if not source:
-        print(Y + "No video selected.")
-        return
+        common_params: dict[str, Any] = {
+            "target_width": self.settings.width,
+            "scale": self.settings.scale_factor,
+            "sequence": self.settings.gradient,
+            "mode": self.settings.mode,
+            "invert": False,  # can be made configurable later
+            "mirror": False,  # can be made configurable later
+            "validator": FileValidator(),
+        }
 
-    ascii_art: str = processor.start(source)
-    # try to recover list of frames (processor returns joined string separated by blank line)
-    frames_list: list[str] = []
-    if isinstance(ascii_art, str):
-        frames_list = ascii_art.split("\n\n") if ascii_art else []
-    else:
+        processor: FrameProcessor = FrameProcessor(**common_params)
+
+        frames: list[str] = self.extract_frames(processor.start_processing(source))
+        if not frames:
+            self.logger.warning("No frames were processed.")
+            return
+
+        output_path: Path = Path("output").resolve()
+        font_path: Path = Path("assets/fonts/JetBrainsMonoNerdFont-Bold.ttf").resolve()
+
+        if is_video:
+            message: str = "Do you want to save the output as a video file?"
+            if self.menu.ask_cofirmation(message, default=True):
+                images: List[str] = frames_to_images(
+                    frames,
+                    out_dir=f"{output_path.as_posix()}/frames",
+                    font_path=font_path.as_posix(),
+                )
+                images_to_video(
+                    images,
+                    output_path=f"{output_path.as_posix()}/output_video.mp4",
+                    fps=self.settings.fps,
+                )
+
+        else:
+            message: str = "Do you want to save the output as image files?"
+            if self.menu.ask_cofirmation(message, default=True):
+                frames_to_images(
+                    frames,
+                    out_dir=f"{output_path.as_posix()}/static_images",
+                    font_path=font_path.as_posix(),
+                )
+
+            if self.menu.ask_cofirmation(message, default=True):
+                frame_to_text(
+                    frames[0],
+                    out_dir=f"{output_path.as_posix()}/static_texts",
+                )
+
+        input("\nPress ENTER to continue...")
+
+    @clear_screen
+    def handle_image(self) -> None:
+        """Process a single image file."""
+        self._create_handler(get_source_via_dialog(is_video=False), is_video=False)
+
+    @clear_screen
+    def handle_video(self) -> None:
+        """Process a single video file."""
+        self._create_handler(get_source_via_dialog(is_video=True), is_video=True)
+
+    @clear_screen
+    def handle_camera(self) -> None:
+        """Process live webcam feed."""
+        self._create_handler(0, is_video=True)
+
+    def extract_frames(self, ascii_art: str) -> list[str]:
+        if isinstance(ascii_art, str):
+            return ascii_art.split("\n\n") if ascii_art else []
         try:
-            frames_list = list(ascii_art)
+            return list(ascii_art)
         except Exception:
-            frames_list = []
+            self.logger.error("Failed to extract frames from ASCII art.")
+            return []
 
-    message = f"Save the {len(frames_list)} frames as images and video?"
-    if ask_save(menu, message=message):
-        save_video(frames_list, settings)
+    @clear_screen
+    def run_init_menu(self) -> None:
+        """Run the initialization menu."""
+        # Reload runtime settings each time user enters the Init menu
+        self.settings = self.config_manager.load_normalized()
+        self.banner.show("ASCII ENGINE", "INPUT MODE")
 
-    input("\nPress ENTER to continue...")
+        answers = self.menu.run_menu("init")
+        if not answers or "option" not in answers:
+            self.logger.warning("Invalid selection, returning to main menu.")
+            return
 
+        mode = answers["option"]
+        match mode:
+            case "camera":
+                self.handle_camera()
+            case "image":
+                self.handle_image()
+            case "video":
+                self.handle_video()
+            case "back":
+                return
+            case _:
+                self.logger.warning(f"Unknown mode: {mode}")
 
-# ============================================================
-#                  SETTINGS & UTILITY HELPERS
-# ============================================================
+    @clear_screen
+    def run_settings_menu(self) -> None:
+        """Run the settings menu."""
+        try:
+            self.banner.show("ASCII ENGINE", "SETTINGS")
+            new_answers = self.menu.run_menu("settings")
+            if not new_answers:
+                self.logger.info("No settings changes made.")
+                return
 
+            # Other approach:
+            # for key, value in new_answers.items():
+            #     self.config_manager.set(key, value)
+            # self.config_manager.save()
+            self.config_manager.update(new_answers, save_immediately=True)
+            self.logger.info("Settings updated successfully.")
 
-def load_settings(manager: SettingsManager) -> AppSettings:
-    """Carga y normaliza la configuración"""
-    raw = manager.load()
-    return AppSettings.from_raw(raw)
+            # Reload runtime settings after update
+            self.settings = self.config_manager.load_normalized()
 
+        except KeyboardInterrupt:
+            self.logger.info("Settings update cancelled by user.")
+            input("\nPress ENTER to continue...\n")
+            return
 
-def ask_save(
-    menu: QuestionsManager, message: str = "Save the ASCII art to a file?"
-) -> bool:
-    """Ask if user wants to save the generated source."""
-    answer = menu.ask_list(
-        message=message,
-        choices=[(Y + "Yes", "1"), (Y + "No", "0")],
-        default="0",
-    )
-    return answer == "1"
+        except Exception as exc:
+            self.logger.error(f"Failed to update settings: {exc}")
 
-
-# ============================================================
-#                  MEDIA HANDLING FUNCTIONS
-# ============================================================
-
-
-def save_video(frames_list: list[str], settings: AppSettings) -> None:
-    """Save the processed frames as a video file."""
-    # Export frames to images
-    out_dir = "output/frames"
-    frames: List[str] = frames_to_images(
-        frames_list, out_dir, font_path="assets/fonts/JetBrainsMonoNerdFont-Bold.ttf"
-    )
-
-    print(Y + f"\nSaved frames to directory: {out_dir}")
-
-    # Create video from images
-    video_path = "output/output_video.mp4"
-    images_to_video(frames, video_path, fps=getattr(settings, "fps", 12))
-    print(Y + f"Saved video: {video_path}")
-
-
-@clear_screen
-def show_section(banner: Banner, title: str, subtitle: str) -> None:
-    """Display section header with banner."""
-    banner.show(title, subtitle)
-    # banner.footer()  # opcional, si quieres el footer en cada sección
-
-
-@clear_screen
-def exit_program() -> None:
-    """Exit the application."""
-    raise SystemExit(0)
-
-
-# ============================================================
-#                     ENTRY POINT
-# ============================================================
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\nInterrupted by user. Exiting...")
-    except Exception as e:
-        print(R + f"Unexpected error: {str(e)}")
-        raise
+    def exit_program(self) -> None:
+        """Exit the application."""
+        self.logger.info("Exiting application as per user request.")
+        raise SystemExit(0)

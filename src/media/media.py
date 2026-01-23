@@ -21,6 +21,10 @@ import colorsys
 import imageio
 import time
 import re
+from log.logconfig import get_logger
+
+
+logger = get_logger(__name__)
 
 ESC_SGR = re.compile(r"\x1b\[([^m]*)m")
 
@@ -165,19 +169,22 @@ def _boost_rgb(rgb: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]
         return rgb
 
 
-def frame_to_text(ascii_frame: str, filename: Optional[str] = None) -> None:
+def frame_to_text(
+        frame: str, 
+        out_dir: Union[str, Path] = "output_texts"
+) -> None:
     """
     Save frame to a text file.
     Only work with plain ASCII (no ANSI/Grayscale colors).
     """
 
-    output_file = filename or f"ascii_output_{int(time.time())}.txt"
+    output_file = f"{out_dir}/frame_{int(time.time())}.txt"
     try:
         with open(output_file, "w", encoding="utf-8") as f:
-            f.write(ascii_frame)
-        print(f"Saved to: {output_file}")
+            f.write(frame)
+        logger.info("Saved to: %s", output_file)
     except Exception as e:
-        print(f"Failed to save file: {e}")
+        logger.error("Failed to save file: %s", e)
 
 
 def frames_to_images(
@@ -207,6 +214,7 @@ def frames_to_images(
         if font_path and Path(font_path).exists():
             font = ImageFont.truetype(str(font_path), font_size)
         else:
+            logger.warning("Font path not found, using default font.")
             font = ImageFont.load_default()
     except Exception:
         font = ImageFont.load_default()
@@ -257,6 +265,7 @@ def frames_to_images(
         img.save(p)
         created.append(str(p))
 
+    logger.info("Saved %d images to: %s", len(created), out_dir)
     return created
 
 
@@ -296,4 +305,5 @@ def images_to_video(
     finally:
         writer.close()
 
+    logger.info("Video saved to: %s", output_path)
     return output_path

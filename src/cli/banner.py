@@ -1,12 +1,14 @@
 from os import get_terminal_size
 from pyfiglet import Figlet, FontNotFound
 from cli.styles import C, Y, G, W  # Colores que definiste en styles.py
+from log.logconfig import get_logger
 
 
 class Banner:
     """Generates stylized ASCII banners for the CLI using pyfiglet."""
 
     def __init__(self, title_font: str = "slant", subtitle_font: str = "small"):
+        self.logger = get_logger(__name__)
         self.title_figlet = self._load_font_safe(title_font)
         self.subtitle_figlet = self._load_font_safe(subtitle_font)
 
@@ -15,7 +17,7 @@ class Banner:
         try:
             return Figlet(font=font_name)
         except FontNotFound:
-            print(W + f"[WARN] Font '{font_name}' not found. Using 'standard'.")
+            self.logger.warning("Font '%s' not found. Falling back to 'standard'.", font_name)
             return Figlet(font="standard")
 
     def render(self, title: str, subtitle: str | None = None) -> str:

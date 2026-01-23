@@ -21,6 +21,8 @@ from settings.modes import Mode
 from settings.gradients import Gradient, get_gradient_ramp
 
 from cli.styles import R
+from log.logconfig import get_logger
+
 
 # ============================================================
 #                  INTERPOLATION ENUM & HELPERS
@@ -58,6 +60,7 @@ class Processor(ABC):
         mirror: bool = False,
         validator: Optional[FileValidator] = None,
     ):
+        self.logger = get_logger(__name__)
         self.target_width = int(target_width)
         self.scale_factor = float(scale)
         self.gradient = get_gradient_ramp(sequence)
@@ -77,7 +80,7 @@ class Processor(ABC):
         """Core ASCII conversion logic for a single frame/image."""
 
     @abstractmethod
-    def start(self, source: Union[str, int]) -> str:
+    def start_processing(self, source: Union[str, int]) -> str:
         """Main entry point to process source and return or display result."""
 
 
@@ -129,7 +132,7 @@ class FrameProcessor(Processor):
 
         return "\n".join(ascii_lines)
 
-    def start(self, source: Union[str, int]) -> str:
+    def start_processing(self, source: Union[str, int]) -> str:
         self._validate_source(source)
         ascii_art: list[str] = []
         
@@ -165,7 +168,11 @@ class FrameProcessor(Processor):
                 ascii_art_str = ascii_art[-1]
 
                 clear_console()
-                print(ascii_art_str if ascii_art_str else "Error: No ASCII frame to render.")
+                # Use logger to output rendered ASCII frame (keeps centralized formatting)
+                if ascii_art_str:
+                    print(ascii_art_str)
+                else:
+                    self.logger.warning("Empty frame received.")
 
                 # Update/display smoothed FPS. If we have a target
                 # `frame_interval`, sleep the remaining time to match it.
@@ -191,9 +198,9 @@ class FrameProcessor(Processor):
 
                 # Print the (possibly smoothed) FPS value for user feedback.
                 if smoothed_fps is not None:
-                    print(f"{Fore.CYAN}{Style.BRIGHT}FPS: {smoothed_fps:.1f}")
+                    print(f"{Fore.CYAN + Style.BRIGHT}FPS: {smoothed_fps:.1f}")
 
-                print(f"{Fore.YELLOW}{Style.BRIGHT}Press 'q' or ESC to exit...")
+                print(f"{Fore.YELLOW + Style.BRIGHT}Press 'q' or ESC to exit...")
 
                 if keyboard.is_pressed("q") or keyboard.is_pressed("esc"):
                     break
@@ -202,7 +209,7 @@ class FrameProcessor(Processor):
                 # time.sleep(max(0, 1.0 / 30 - (time.time() - now)))
 
         except KeyboardInterrupt:
-            print(f"{Fore.RED}Interrupted by user.")
+            self.logger.info("Processing interrupted by user.")
 
         finally:
             cap.release()

@@ -1,5 +1,9 @@
 from enum import Enum, auto
 
+from log.logconfig import get_logger
+
+logger = get_logger(__name__)
+
 class Gradient(Enum):
     BASIC     = auto()
     DETAILED  = auto()
@@ -25,9 +29,13 @@ def get_gradient(name: str) -> Gradient:
     try:
         return Gradient[name]
     except KeyError:
-        print(f"[WARN] Invalid gradient '{name}', using DETAILED as default")
+        logger.warning(f"Invalid gradient '{name}', using DETAILED as default")
         return Gradient.DETAILED
 
 def get_gradient_ramp(gradient: Gradient) -> str:
     """Get the character string corresponding to the gradient"""
-    return GRADIENT_RAMP[gradient]
+    try:
+        return GRADIENT_RAMP[gradient]
+    except KeyError:
+        logger.warning(f"Gradient '{gradient}' not found, using DETAILED as default")
+        return GRADIENT_RAMP[Gradient.DETAILED]

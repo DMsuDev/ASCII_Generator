@@ -41,7 +41,7 @@ MENUS = {
                 "type": "text",
                 "name": "scale_factor",
                 "message": "Set the scale factor for the height of the video/image",
-                "default": "0.43",
+                "default": "0.50",
             },
             {
                 "type": "list",

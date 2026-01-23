@@ -6,7 +6,7 @@ setlocal EnableDelayedExpansion
 :: ────────────────────────────────────────────────
 
 set "VENV_FOLDER=.venv"
-set "MAIN_SCRIPT=src\app.py"
+set "MAIN_SCRIPT=src\main.py"
 set "CLEAN_SCRIPT=test\clean.py"
 
 :: 1 = use venv    0 = use global python
