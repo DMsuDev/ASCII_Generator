@@ -1,0 +1,27 @@
+from enum import Enum, auto
+
+
+class Mode(Enum):
+    """
+    Mode of rendering for the ASCII engine.
+    """
+    RGB        = auto()
+    GRAYSCALE  = auto()
+    ASCII      = auto()
+    # Add more in the future without breaking almost anything
+    # BLOCK      = auto()
+
+
+def get_mode(name: str) -> Mode:
+    """
+    Convert a mode name (string) to its enum value.
+    
+    Returns RGB as a safe fallback if the value is not valid.
+    """
+    name = name.strip().upper()
+    try:
+        return Mode[name]
+    except KeyError:
+        print(f"Unrecognized mode: {name}. Valid values: {', '.join(m.name for m in Mode)}")
+        return Mode.RGB
+    

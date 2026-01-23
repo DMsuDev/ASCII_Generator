@@ -1,13 +1,13 @@
+
+import logging
 from typing import Any, Dict, Optional, Callable
 from pathlib import Path
-import logging
-import json
 from copy import deepcopy
 
-logger = logging.getLogger(__name__)
+import json
 
 
-class ConfigManager:
+class SettingsManager:
     """
     Simple and robust JSON configuration manager.
 
@@ -36,13 +36,15 @@ class ConfigManager:
         self._data: Dict[str, Any] = {}
         self._is_loaded = False
 
-        self._input_func = interactive_input or self._default_input
+        self._input_func = interactive_input or self.default_input
         self._validate = validate_func
 
+        self._logger = logging.getLogger(__name__)
+        
         # Auto-load on initialization (common pattern)
         self.load()
 
-    def _default_input(self, message: str, default: Any = "") -> str:
+    def default_input(self, message: str, default: Any = "") -> str:
         """Default input with visible default value"""
         default_str = f" [{default}]" if default else ""
         return input(f"{message}{default_str}: ").strip() or str(default)
@@ -60,7 +62,7 @@ class ConfigManager:
             return self._data.copy()
 
         if not self._path.exists():
-            logger.info("Config file %s not found → using defaults", self._path.name)
+            self._logger.info("Config file %s not found → using defaults", self._path.name)
             self._data = deepcopy(self._defaults)
             self._is_loaded = True
             self.save()  # Create file with defaults on first run
@@ -80,15 +82,15 @@ class ConfigManager:
                 try:
                     self._validate(self._data)
                 except ValueError as e:
-                    logger.warning("Validation failed: %s → restoring defaults", e)
+                    self._logger.warning("Validation failed: %s → restoring defaults", e)
                     self._data = deepcopy(self._defaults)
                     self.save()
 
-            logger.debug("Configuration loaded successfully from %s", self._path)
+            self._logger.debug("Configuration loaded successfully from %s", self._path)
             return self._data.copy()
 
         except (json.JSONDecodeError, OSError, TypeError) as e:
-            logger.warning(
+            self._logger.warning(
                 "Failed to read %s properly (%s) → restoring defaults", self._path, e
             )
             self._data = deepcopy(self._defaults)
@@ -104,9 +106,9 @@ class ConfigManager:
             target.parent.mkdir(parents=True, exist_ok=True)
             with target.open("w", encoding="utf-8") as f:
                 json.dump(self._data, f, indent=4, ensure_ascii=False)
-            logger.debug("Configuration saved to %s", target)
+            self._logger.debug("Configuration saved to %s", target)
         except OSError as e:
-            logger.error("Error saving config to %s: %s", target, e)
+            self._logger.error("Error saving config to %s: %s", target, e)
             raise
 
     def get(self, key: str, default: Any = None) -> Any:

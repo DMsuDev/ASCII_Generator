@@ -17,7 +17,9 @@ from utils import (
     scale_height,
     get_terminal_size,
 )
-from settings.config import MODE, GRADIENT
+from settings.modes import Mode
+from settings.gradients import Gradient
+
 from cli.styles import R
 
 # ============================================================
@@ -67,8 +69,8 @@ class Processor(ABC):
         self,
         target_width: int,
         scale: float,
-        sequence: GRADIENT,
-        mode: MODE,
+        sequence: Gradient,
+        mode: Mode,
         invert: bool = False,
         mirror: bool = False,
         validator: Optional[FileValidator] = None,
@@ -134,10 +136,10 @@ class FrameProcessor(Processor):
                 pixel_val = gray[y, x]
                 char = get_index_ascii(pixel_val, self.gradient)
 
-                if self.mode == MODE.RGB:
+                if self.mode == Mode.RGB:
                     b, g, r = color_frame[y, x]
                     row.append(rgb_to_ansi(r, g, b, char))
-                elif self.mode == MODE.GRAYSCALE:
+                elif self.mode == Mode.GRAYSCALE:
                     row.append(gray_to_ansi(pixel_val, char))
                 else:
                     row.append(char)

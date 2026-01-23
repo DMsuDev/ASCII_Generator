@@ -4,8 +4,9 @@ from cli.banner import Banner
 
 from processor import FrameProcessor, Processor, FileValidator
 
-from settings.config import DEFAULT_SETTINGS, normalize_runtime_settings
-from data.config_manager import ConfigManager
+from settings.defaults import DEFAULT_RAW_SETTINGS
+from settings.loader import AppSettings
+from settings.manager import SettingsManager
 
 from utils import clear_console, clear_screen, get_source_via_dialog
 from cli.styles import R, Y
@@ -26,17 +27,20 @@ def main() -> None:
     menu: QuestionsManager = QuestionsManager()
 
     # Initialize config manager with defaults and custom input handler
-    config_manager: ConfigManager = ConfigManager(
+    config_manager: SettingsManager = SettingsManager(
         file_name="config.json",
-        default_config=DEFAULT_SETTINGS,
+        default_config=DEFAULT_RAW_SETTINGS,
         interactive_input=menu.ask_text,
     )
+    
+    settings: AppSettings = load_settings(config_manager)
 
     routes: Dict[str, Callable] = {
         "init": lambda: handle_init(menu, banner, config_manager),
         "settings": lambda: handle_settings_update(menu, config_manager, banner),
         "exit": exit_program,
     }
+
 
     while True:
         clear_console()
@@ -65,11 +69,11 @@ def main() -> None:
 def handle_init(
     menu: QuestionsManager,
     banner: Banner,
-    config_manager: ConfigManager,
+    config_manager: SettingsManager,
 ) -> None:
     """Handle selection of input source mode (loads settings at call time)."""
     # Reload runtime settings each time user enters the Init menu
-    settings = load_and_normalize_settings(config_manager)
+    settings = load_settings(config_manager)
 
     show_section(banner, title="ASCII ENGINE", subtitle="INPUT MODE")
 
@@ -95,7 +99,7 @@ def handle_init(
 @clear_screen
 def handle_settings_update(
     menu: QuestionsManager,
-    config_manager: ConfigManager,
+    config_manager: SettingsManager,
     banner: Banner,
 ) -> None:
     """Update settings interactively and save them."""
@@ -111,7 +115,7 @@ def handle_settings_update(
         print("\nSettings updated and saved.")
 
     # Reload normalized settings (though not strictly needed here)
-    updated = load_and_normalize_settings(config_manager)
+    updated = load_settings(config_manager)
     print("Runtime values:", updated)
 
     input("\nPress ENTER to return...")
@@ -122,7 +126,7 @@ def handle_settings_update(
 # ============================================================
 
 
-def create_processor(settings: Dict[str, Any]) -> Processor:
+def create_processor(settings: AppSettings) -> Processor:
     """
     Factory function to create the appropriate processor
     based on shared settings (avoids duplication).
@@ -130,10 +134,10 @@ def create_processor(settings: Dict[str, Any]) -> Processor:
     validator = FileValidator()
 
     common_params = {
-        "target_width": settings["width"],
-        "scale": settings["scale_factor"],
-        "sequence": settings["gradient"],
-        "mode": settings["mode"],
+        "target_width": settings.width,
+        "scale": settings.scale_factor,
+        "sequence": settings.gradient,
+        "mode": settings.mode,
         "invert": False,  # can be made configurable later
         "mirror": False,  # can be made configurable later
         "validator": validator,
@@ -145,7 +149,7 @@ def create_processor(settings: Dict[str, Any]) -> Processor:
 
 
 @clear_screen
-def handle_image(settings: Dict[str, Any], menu: QuestionsManager) -> None:
+def handle_image(settings: AppSettings, menu: QuestionsManager) -> None:
     """Process a single static image."""
     processor = create_processor(settings)
     source = get_source_via_dialog(is_video=False)
@@ -163,14 +167,14 @@ def handle_image(settings: Dict[str, Any], menu: QuestionsManager) -> None:
 
 
 @clear_screen
-def handle_camera(settings: Dict[str, Any]) -> None:
+def handle_camera(settings: AppSettings) -> None:
     """Process live webcam feed."""
     processor = create_processor(settings)
     processor.start(0)  # 0 = default camera
 
 
 @clear_screen
-def handle_video(settings: Dict[str, Any], menu: QuestionsManager) -> None:
+def handle_video(settings: AppSettings, menu: QuestionsManager) -> None:
     """Process a video file."""
     processor = create_processor(settings)
     source = get_source_via_dialog(is_video=True)
@@ -200,7 +204,7 @@ def handle_video(settings: Dict[str, Any], menu: QuestionsManager) -> None:
 
         # Create video from images
         video_path = "output/output_video.mp4"
-        images_to_video(out_dir, video_path, fps=settings.get("fps", 12))
+        images_to_video(out_dir, video_path, fps=getattr(settings, "fps", 12))
         print(Y + f"Saved video: {video_path}")
 
     input("\nPress ENTER to continue...")
@@ -211,10 +215,10 @@ def handle_video(settings: Dict[str, Any], menu: QuestionsManager) -> None:
 # ============================================================
 
 
-def load_and_normalize_settings(config_manager: ConfigManager) -> Dict[str, Any]:
-    """Load config and convert to runtime-ready format with enums."""
-    raw = config_manager.load()
-    return normalize_runtime_settings(raw)
+def load_settings(manager: SettingsManager) -> AppSettings:
+    """Carga y normaliza la configuración"""
+    raw = manager.load()
+    return AppSettings.from_raw(raw)
 
 
 def ask_save(
