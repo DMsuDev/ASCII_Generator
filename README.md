@@ -5,22 +5,35 @@
 ![Status](https://img.shields.io/badge/Status-Early%20Development-yellow?style=flat)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?style=flat)
 
-One of my most recent projects! I was literally bored and decided to explore the world of ASCII art, which inspired this project.
+## 📜 Overview
+
+**ASCII Generator** is a Python tool that transforms **images** and **videos** into ASCII art in real time or as static output.
 
 <p align="center">
-  <img src="assets/app.png" width="600" alt="MFOG App Preview">
+  <img src="assets/img/app.png" width="600" alt="ASCII App Preview">
+  <br><br>
+  <em>Interactive terminal interface with real-time preview</em>
 </p>
 
-ASCII Generator allows you to convert images and videos into ASCII art in a modular, interactive, and fully configurable way.
+## 📖 Table of Contents
 
-## 📑 Table of Contents
-
+- [✨ Features](#-features)
 - [🚀 Installation](#-installation)
-- [▶️ Usage](#usage)
+- [▶️ Quick Start](#quick-start)
 - [📦 Dependencies](#-dependencies)
-- [✨ Examples](#-examples)
-- [🤝 Contributions](#-contributions)
-- [📝 License](#-license)
+- [🎬 Examples](#-examples)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+
+## ✨ Features
+
+- Real-time image/video → ASCII conversion
+- Support for **color** (truecolor/ANSI) and **grayscale** modes
+- Adjustable character density, width, contrast, and brightness
+- Interactive terminal menu with arrow-key navigation
+- Persistent user settings (saved between sessions in `config.json`)
+- Clean modular architecture — easy to extend
+- Windows-friendly (includes `run.bat` launcher)
 
 ## 🚀 Installation
 
@@ -29,50 +42,55 @@ Clone the repository:
 ```bash
 git clone https://github.com/DMsuDev/ASCII_Generator.git
 cd ASCII_Generator
-```
 
-Install the dependencies:
+# Recommended: create a virtual environment
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # Linux / macOS
 
-```cmd
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-## Usage
+## Quick Start
 
-Run the main program:
+Launch the application:
 
 ```cmd
-python app.py
+python src/app.py
 ```
 
-From there you can:
+Alternatively (**Windows** users):
 
-- Select an image or video file
-- Adjust parameters (width, density, color, speed…)
-- Start real-time ASCII conversion
-- Navigate dynamic menus and persistent settings
+- Double-click `run.bat` (launches the packaged version)
+- Or run `python test/clean.py .` first to remove **pycache** folders
+
+Once running you can:
+
+- Choose file (image/video) or webcam
+- Adjust width, character set, color mode, speed, etc.
+- Watch real-time ASCII rendering
+- Save settings for next time
 
 ## 📦 Dependencies
 
-The following dependencies are required to run this project:
+Listed in `requirements.txt` </br>
+Main libraries include:
 
-| Package        | Version / Notes                         |
-| -------------- | --------------------------------------- |
-| **Python**     | 3.11.0 or 3.12.0                        |
-| **OpenCV**     | 4.12.0.88                               |
-| **NumPy**      | 2.2.x (compatible with OpenCV)          |
-| **readchar**   | Latest stable                           |
-| **Colorama**   | Latest stable                           |
-| **InquirerPy** | Latest stable (CLI menus, optional)     |
-| **PyFiglet**   | Latest stable (ASCII banners, optional) |
+- `opencv-python` — image/video processing
+- `numpy` — fast array operations
+- `colorama` — colored terminal output
+- `readchar` — single-key input handling
+
+**Recommended:** Python 3.11 or newer
 
 ## ✨ Examples
 
-| RGB Camera Input                       | Grayscale ASCII                       | ASCII Conversion                             | RGB ASCII Output                          |
-| -------------------------------------- | ------------------------------------- | -------------------------------------------- | ----------------------------------------- |
-| ![RGB Camera](./assets/rgb_camera.png) | ![Gray ASCII](./assets/var1_gray.png) | ![ASCII Conversion](./assets/var2_ascii.png) | ![RGB ASCII](./assets/var2_rgb_ascii.png) |
+| RGB Camera Input                           | Grayscale ASCII                           | ASCII Conversion                                 | RGB ASCII Output                              |
+| ------------------------------------------ | ----------------------------------------- | ------------------------------------------------ | --------------------------------------------- |
+| ![RGB Camera](./assets/img/rgb_camera.png) | ![Gray ASCII](./assets/img/var1_gray.png) | ![ASCII Conversion](./assets/img/var2_ascii.png) | ![RGB ASCII](./assets/img/var2_rgb_ascii.png) |
 
-## 🤝 Contributions
+## 🤝 Contributing
 
 Contributions are **welcome**! Whether you want to fix bugs, improve performance, add new features, or enhance the UI, feel free to open an issue or submit a pull request.
 
@@ -86,3 +104,5 @@ MFOG is licensed under the MIT License.
 See the [LICENSE](LICENSE) file for more details.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat)](LICENSE)
+
+by DMsuDev © 2026
