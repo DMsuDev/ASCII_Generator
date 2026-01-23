@@ -1,9 +1,9 @@
 import inquirer
 from typing import Any, Dict, List, Optional, Tuple
 
-from cli.menus import MENUS
+from .menus import MENUS
 
-from log.logconfig import get_logger
+from ..log import get_logger
 
 class QuestionsManager:
     """Handles interactive prompts using the inquirer library."""

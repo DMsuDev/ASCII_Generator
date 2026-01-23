@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from log.logconfig import get_logger
+from ..log import get_logger
 
 
 logger = get_logger(__name__)

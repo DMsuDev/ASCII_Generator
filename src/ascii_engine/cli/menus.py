@@ -1,14 +1,14 @@
-from cli.styles import Y
+from ..utils import COLORS
 
-MENUS = {
+MENUS: dict = {
     "main": {
         "type": "list",
         "name": "option",
         "message": "Welcome to ASCII GENERATOR by DMsuDev",
         "choices": [
-            (Y + "🛠️ Start", "init"),
-            (Y + "⚙️ Settings", "settings"),
-            (Y + "🚪 Exit", "exit"),
+            (COLORS.YELLOW.value + "🛠️ Start", "init"),
+            (COLORS.YELLOW.value + "⚙️ Settings", "settings"),
+            (COLORS.YELLOW.value + "🚪 Exit", "exit"),
         ],
     },
     "init": {
@@ -16,10 +16,10 @@ MENUS = {
         "name": "option",
         "message": "Select the input mode",
         "choices": [
-            (Y + "📷 Camera", "camera"),
-            (Y + "🖼️ Image", "image"),
-            (Y + "🎬 Video", "video"),
-            (Y + "◀️ Back", "back"),
+            (COLORS.YELLOW.value + "📷 Camera", "camera"),
+            (COLORS.YELLOW.value + "🖼️ Image", "image"),
+            (COLORS.YELLOW.value + "🎬 Video", "video"),
+            (COLORS.YELLOW.value + "◀️ Back", "back"),
         ],
     },
     "settings": {
@@ -48,9 +48,9 @@ MENUS = {
                 "name": "mode",
                 "message": "Select the color mode",
                 "choices": [
-                    (Y + "RGB", "RGB"),
-                    (Y + "Grayscale", "GRAYSCALE"),
-                    (Y + "ASCII", "ASCII"),
+                    (COLORS.YELLOW.value + "RGB", "RGB"),
+                    (COLORS.YELLOW.value + "Grayscale", "GRAYSCALE"),
+                    (COLORS.YELLOW.value + "ASCII", "ASCII"),
                 ],
                 "default": "RGB",
             },
@@ -59,11 +59,11 @@ MENUS = {
                 "name": "gradient",
                 "message": "Select the gradient type",
                 "choices": [
-                    (Y + "Short gradient (@%#*+=-:. )", "BASIC"),
-                    (Y + "Long gradient ($@B%8&WM#*oahkbdpqwmZO0QLCJUYX...)", "DETAILED",),
-                    (Y + "Light gradient (8@$e*+!:.  )", "LIGHT"),
-                    (Y + "Color gradients (◍sr*.)", "COLOR"),
-                    (Y + "Filled blocks █▓▒", "FILLED"),
+                    (COLORS.YELLOW.value + "Short gradient (@%#*+=-:. )", "BASIC"),
+                    (COLORS.YELLOW.value + "Long gradient ($@B%8&WM#*oahkbdpqwmZO0QLCJUYX...)", "DETAILED",),
+                    (COLORS.YELLOW.value + "Light gradient (8@$e*+!:.  )", "LIGHT"),
+                    (COLORS.YELLOW.value + "Color gradients (◍sr*.)", "COLOR"),
+                    (COLORS.YELLOW.value + "Filled blocks █▓▒", "FILLED"),
                 ],
                 "default": "DETAILED",
             },

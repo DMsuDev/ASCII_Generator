@@ -1,7 +1,7 @@
 from os import get_terminal_size
 from pyfiglet import Figlet, FontNotFound
-from cli.styles import C, Y, G, W  # Colores que definiste en styles.py
-from log.logconfig import get_logger
+from ..utils import COLORS
+from ..log import get_logger
 
 
 class Banner:
@@ -22,9 +22,9 @@ class Banner:
 
     def render(self, title: str, subtitle: str | None = None) -> str:
         """Generate banner as string (without printing)."""
-        output = C + self.title_figlet.renderText(title)
+        output = COLORS.CYAN.value + self.title_figlet.renderText(title)
         if subtitle:
-            output += Y + self.subtitle_figlet.renderText(subtitle)
+            output += COLORS.YELLOW.value + self.subtitle_figlet.renderText(subtitle)
         return output
 
     def show(self, title: str = "ASCII", subtitle: str | None = None) -> None:
@@ -36,6 +36,6 @@ class Banner:
         width = get_terminal_size().columns
         line = "=" * min(width, 50)
 
-        print(G + line)
-        print(W + "      ASCII GENERATOR by DMsuDev      ".center(len(line)))
-        print(G + line + "\n")
+        print(COLORS.GREEN.value + line)
+        print(COLORS.WHITE.value + "      ASCII GENERATOR by DMsuDev      ".center(len(line)))
+        print(COLORS.GREEN.value + line + "\n")

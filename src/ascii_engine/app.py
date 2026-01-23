@@ -1,19 +1,20 @@
 from pathlib import Path
 from typing import Any, Callable, Dict, List
-from cli.questions_manager import QuestionsManager
-from cli.banner import Banner
 
-from core.processor import FrameProcessor
-from core.validator import FileValidator
+from .cli.questions_manager import QuestionsManager
+from .cli.banner import Banner
+from .core import FrameProcessor
+from .core import FileValidator
 
-from settings.defaults import DEFAULT_RAW_SETTINGS
-from settings.loader import AppSettings
-from settings.manager import SettingsManager
+from .settings import DEFAULT_RAW_SETTINGS
+from .settings import AppSettings
+from .settings.manager import SettingsManager
 
-from utils import clear_console, clear_screen, get_source_via_dialog
-from media.media import frame_to_text, frames_to_images, images_to_video
+from .utils import clear_console, clear_screen, get_source_via_dialog
+from .media.media import frame_to_text, frames_to_images, images_to_video
 
-from log.logconfig import get_logger
+from .utils import init_colors
+from .log import get_logger
 
 
 class AppEngine:
@@ -46,6 +47,7 @@ class AppEngine:
         Handles menu navigation and user input.
         """
 
+        init_colors()
         self.logger.debug("Starting ASCII Generator application.")
 
         try:

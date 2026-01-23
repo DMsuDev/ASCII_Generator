@@ -1,9 +1,10 @@
 import os
 from typing import Union
-from log.logconfig import get_logger
+from ..log import get_logger
 
 
 logger = get_logger(__name__)
+
 
 class FileValidator:
     """Validates input sources (file paths or camera indices)."""

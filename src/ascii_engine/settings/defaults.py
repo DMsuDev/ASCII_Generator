@@ -1,5 +1,5 @@
-from settings.modes import Mode
-from settings.gradients import Gradient
+from .modes import Mode
+from .gradients import Gradient
 
 DEFAULT_RAW_SETTINGS = {
     "fps": 24,

@@ -1,12 +1,10 @@
-
 import logging
 from typing import Any, Dict, Optional, Callable
-from settings.loader import AppSettings
+from .loader import AppSettings
 from pathlib import Path
 from copy import deepcopy
 
 import json
-
 
 
 class SettingsManager:
@@ -42,7 +40,7 @@ class SettingsManager:
         self._validate = validate_func
 
         self.logger = logging.getLogger(__name__)
-        
+
         # Auto-load on initialization (common pattern)
         self.load()
 
@@ -64,7 +62,9 @@ class SettingsManager:
             return self._data.copy()
 
         if not self._path.exists():
-            self.logger.debug("Config file %s not found, using defaults", self._path.name)
+            self.logger.debug(
+                "Config file %s not found, using defaults", self._path.name
+            )
             self._data = deepcopy(self._defaults)
             self._is_loaded = True
             self.save()  # Create file with defaults on first run
@@ -106,7 +106,7 @@ class SettingsManager:
         Uses AppSettings.from_raw() for conversion.
         """
         return AppSettings.from_raw(self.data)
-    
+
     def save(self, custom_path: Optional[Path | str] = None) -> None:
         """Save current state (self.data) to disk"""
         target = Path(custom_path) if custom_path else self._path
