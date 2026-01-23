@@ -160,6 +160,13 @@ def handle_image(settings: AppSettings, menu: QuestionsManager) -> None:
     if ask_save(menu):
         # TODO: allow user to choose filename/path
         frame_to_text(ascii_art, filename="ascii_image_output.txt")
+    
+    if ask_save(menu, message="Save the ASCII art as images?"):
+        frames_to_images(
+            [ascii_art],
+            out_dir="output/static_image_frames",
+            font_path="assets/fonts/JetBrainsMonoNerdFont-Bold.ttf",
+        )
 
     input("\nPress ENTER to continue...")
 
