@@ -1,8 +1,9 @@
-from typing import Any, Callable, Dict
+from typing import Callable, Dict
 from cli.questions_manager import QuestionsManager
 from cli.banner import Banner
 
-from processor import FrameProcessor, Processor, FileValidator
+from core.processor import FrameProcessor, Processor
+from core.validator import FileValidator
 
 from settings.defaults import DEFAULT_RAW_SETTINGS
 from settings.loader import AppSettings
@@ -33,8 +34,6 @@ def main() -> None:
         interactive_input=menu.ask_text,
     )
     
-    settings: AppSettings = load_settings(config_manager)
-
     routes: Dict[str, Callable] = {
         "init": lambda: handle_init(menu, banner, config_manager),
         "settings": lambda: handle_settings_update(menu, config_manager, banner),

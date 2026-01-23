@@ -3,12 +3,12 @@ from enum import Enum
 import time
 from typing import Optional, Union
 
-import os
 import cv2
 import keyboard
 import numpy as np
 from colorama import Fore, Style
 
+from core.validator import FileValidator
 from utils import (
     clear_console,
     get_index_ascii,
@@ -44,23 +44,6 @@ def get_interpolation_method(method_name: str) -> int:
     except KeyError:
         print(f"Unknown interpolation '{method_name}', using LINEAR")
         return cv2.INTER_LINEAR
-
-
-# ============================================================
-#                  FILE VALIDATOR (SIN CAMBIOS)
-# ============================================================
-
-
-class FileValidator:
-    """Validates input sources (file paths or camera indices)."""
-
-    def validate(self, source: Union[str, int]) -> bool:
-        if isinstance(source, str):
-            return os.path.exists(source)
-        if isinstance(source, int):
-            return source == 0  # only default camera allowed for simplicity
-        raise TypeError(f"Invalid source type: {type(source)}")
-
 
 class Processor(ABC):
     """Handles frame transformations before ASCII conversion."""
