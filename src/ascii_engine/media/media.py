@@ -171,14 +171,21 @@ def _boost_rgb(rgb: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]
 
 def frame_to_text(
         frame: str, 
-        out_dir: Union[str, Path] = "output_texts"
+        out_path: Union[str, Path] = "output_texts"
 ) -> None:
     """
     Save frame to a text file.
-    Only work with plain ASCII (no ANSI/Grayscale colors).
+    Does not support ANSI or grayscale color output.
+    - `frame`: multiline string to save.
+    - `out_path`: directory where text files will be written (created if missing).
     """
 
-    output_file = f"{out_dir}/frame_{int(time.time())}.txt"
+    out_dir: Union[str, Path] = Path(out_path)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    filename: str = f"frame_{time.time_ns()}.txt"
+    output_file: Path = out_dir / filename
+
     try:
         with open(output_file, "w", encoding="utf-8") as f:
             f.write(frame)
@@ -271,9 +278,9 @@ def frames_to_images(
 
 def images_to_video(
     img_dir_or_list: Union[str, Path, Sequence[str]],
-    output_path: str = "out.mp4",
+    output_path: Union[str, Path] = "out.mp4",
     fps: int = 12,
-) -> str:
+) -> Path:
     """Create a video (mp4) from images using imageio.
 
     - `img_dir_or_list`: directory path or a sequence of image file paths.
@@ -282,6 +289,10 @@ def images_to_video(
 
     Returns the `output_path` on success.
     """
+
+    out_path = Path(output_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
     if isinstance(img_dir_or_list, (str, Path)):
         p = Path(img_dir_or_list)
         files = sorted(
@@ -297,7 +308,7 @@ def images_to_video(
     if not files:
         raise FileNotFoundError("No image files found for video creation")
 
-    writer = imageio.get_writer(output_path, fps=fps)
+    writer = imageio.get_writer(out_path, fps=fps)
     try:
         for f in files:
             img = imageio.imread(f)
@@ -305,5 +316,5 @@ def images_to_video(
     finally:
         writer.close()
 
-    logger.info("Video saved to: %s", output_path)
-    return output_path
+    logger.info("Video saved to: %s", out_path)
+    return out_path
