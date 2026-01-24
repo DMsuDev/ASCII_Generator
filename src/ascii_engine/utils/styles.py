@@ -15,5 +15,5 @@ class COLORS(Enum):
     MAGENTA = Fore.MAGENTA + Style.BRIGHT
     CYAN    = Fore.CYAN + Style.BRIGHT
     WHITE   = Fore.WHITE + Style.BRIGHT
-    DIM = Style.DIM
-    RESET = Style.RESET_ALL
+    DIM     = Style.DIM
+    RESET   = Style.RESET_ALL
