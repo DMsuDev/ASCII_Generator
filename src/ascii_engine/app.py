@@ -13,7 +13,7 @@ from .settings.manager import SettingsManager
 from .utils import clear_console, clear_screen, get_source_via_dialog
 from .media.media import frame_to_text, frames_to_images, images_to_video
 
-from .utils import init_colors
+from .utils import init_colors, COLORS
 from .log import get_logger
 
 
@@ -24,7 +24,7 @@ class AppEngine:
     """
 
     def __init__(self) -> None:
-        self.logger = get_logger(__name__)
+        self.logger = get_logger("app")
 
         self.banner: Banner = Banner()
         self.menu: QuestionsManager = QuestionsManager()
@@ -105,12 +105,12 @@ class AppEngine:
             if self.menu.ask_cofirmation(message, default=True):
                 images: List[str] = frames_to_images(
                     frames,
-                    out_dir=f"{output_path.as_posix()}/frames",
+                    out_dir=output_path/"frames",
                     font_path=font_path.as_posix(),
                 )
                 images_to_video(
                     images,
-                    output_path=f"{output_path.as_posix()}/output_video.mp4",
+                    output_path=output_path/"output_video.mp4",
                     fps=self.settings.fps,
                 )
 
@@ -119,14 +119,14 @@ class AppEngine:
             if self.menu.ask_cofirmation(message, default=True):
                 frames_to_images(
                     frames,
-                    out_dir=f"{output_path.as_posix()}/static_images",
+                    out_dir=output_path/"static_images",
                     font_path=font_path.as_posix(),
                 )
 
             if self.menu.ask_cofirmation(message, default=True):
                 frame_to_text(
                     frames[0],
-                    out_dir=f"{output_path.as_posix()}/static_texts",
+                    out_path=output_path/"static_texts",
                 )
 
         input("\nPress ENTER to continue...")
@@ -200,6 +200,11 @@ class AppEngine:
             # Reload runtime settings after update
             self.settings = self.config_manager.load_normalized()
 
+            # Print updated settings for user confirmation
+            print("\nUpdated Settings:")
+            for key, value in new_answers.items():
+                print(f" - {COLORS.YELLOW.value + key}{COLORS.RESET.value}: {COLORS.CYAN.value + value}")
+
         except KeyboardInterrupt:
             self.logger.info("Settings update cancelled by user.")
             input("\nPress ENTER to continue...\n")
@@ -207,6 +212,8 @@ class AppEngine:
 
         except Exception as exc:
             self.logger.error(f"Failed to update settings: {exc}")
+
+        input("\nPress ENTER to continue...\n")
 
     def exit_program(self) -> None:
         """Exit the application."""
