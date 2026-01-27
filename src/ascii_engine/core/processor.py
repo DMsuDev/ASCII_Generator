@@ -1,6 +1,4 @@
 from abc import ABC, abstractmethod
-from enum import Enum
-import time
 from typing import Optional, Union
 
 import cv2
@@ -8,36 +6,13 @@ import keyboard
 import numpy as np
 
 from .validator import FileValidator
-from .ascii_utils import get_index_ascii, rgb_to_ansi, gray_to_ansi
-from .frames_utils import scale_height
+from .resizer import Resizer
+from .converter import Converter
 
-from ..utils import clear_console, get_terminal_size, COLORS
+from ..utils import clear_console, COLORS
 from ..settings import Mode, Gradient, get_gradient_ramp
 from ..log import get_logger
-
-
-# ============================================================
-#                  INTERPOLATION ENUM & HELPERS
-# ============================================================
-
-
-class INTERPOLATION(Enum):
-    """Available interpolation methods for resizing."""
-
-    NEAREST = cv2.INTER_NEAREST  # Fast, pixelated (good for ASCII precision)
-    LINEAR = cv2.INTER_LINEAR  # Default, smooth
-    CUBIC = cv2.INTER_CUBIC  # Slower, higher quality
-    AREA = cv2.INTER_AREA  # Good for downscaling
-    LANCZOS4 = cv2.INTER_LANCZOS4  # Best quality for images
-
-
-def get_interpolation_method(method_name: str) -> int:
-    """Convert string interpolation name to OpenCV constant."""
-    try:
-        return INTERPOLATION[method_name.upper()].value
-    except KeyError:
-        print(f"Unknown interpolation '{method_name}', using LINEAR")
-        return cv2.INTER_LINEAR
+from .time_manager import FPSController
 
 
 class Processor(ABC):
@@ -52,6 +27,8 @@ class Processor(ABC):
         invert: bool = False,
         mirror: bool = False,
         validator: Optional[FileValidator] = None,
+        resizer: Optional[Resizer] = None,
+        ascii_converter: Optional[Converter] = None,
     ):
         self.logger = get_logger(__name__)
         self.target_width = int(target_width)
@@ -61,6 +38,8 @@ class Processor(ABC):
         self.invert = invert
         self.mirror = mirror
         self.validator = validator or FileValidator()
+        self.resizer = resizer or Resizer()
+        self.ascii_converter = ascii_converter or Converter()
 
     def _validate_source(self, source: Union[str, int]) -> None:
         if not self.validator.validate(source):
@@ -98,32 +77,16 @@ class FrameProcessor(Processor):
             frame = cv2.flip(frame, 1)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        term_w, _ = get_terminal_size()
-        new_w = min(self.target_width, term_w)
         h, w = gray.shape
-        new_h = scale_height(new_w, w, h, self.scale_factor)
 
-        gray = cv2.resize(gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
-        color_frame = cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_AREA)
+        new_w, new_h = self.resizer.compute_size(
+            self.target_width, w, h, self.scale_factor
+        )
 
-        ascii_lines = []
-        for y in range(new_h):
-            row = []
-            for x in range(new_w):
-                pixel_val = gray[y, x]
-                char = get_index_ascii(pixel_val, self.gradient)
+        gray = self.resizer.resize(gray, (new_w, new_h))
+        color_frame = self.resizer.resize(frame, (new_w, new_h))
 
-                if self.mode == Mode.RGB:
-                    b, g, r = color_frame[y, x]
-                    row.append(rgb_to_ansi(r, g, b, char))
-                elif self.mode == Mode.GRAYSCALE:
-                    row.append(gray_to_ansi(pixel_val, char))
-                else:
-                    row.append(char)
-            ascii_lines.append("".join(row))
-
-        return "\n".join(ascii_lines)
+        return self.ascii_converter.convert(gray, color_frame, self.gradient, self.mode)
 
     def start_processing(self, source: Union[str, int]) -> str:
         self._validate_source(source)
@@ -136,79 +99,45 @@ class FrameProcessor(Processor):
         # Get native video FPS; if unavailable don't throttle
         video_fps = cap.get(cv2.CAP_PROP_FPS) or 0.0
 
-        # If video_fps is valid, compute the target time per frame. If it's
-        # invalid or too small, keep `frame_interval` as None
-        frame_interval = 1.0 / video_fps if video_fps and video_fps > 0.001 else None
-
-        # Monotonic timer for measuring display intervals
-        prev_display_time = time.perf_counter()
-
-        # Exponential moving average value shown to the user
-        smoothed_fps: Optional[float] = None
-
-        # EMA alpha (0..1): higher = more responsive, lower = smoother
-        fps_smoothing_alpha = 0.2
+        # FPS controller for throttling and smoothing
+        fps_ctrl = FPSController(video_fps)
         try:
             while True:
                 ret, frame = cap.read()
                 if not ret:
-                    break  # end of video
+                    break 
 
-                # Iteration start to compute processing+render time
-                iter_start = time.perf_counter()
+                # Delta time desde el último frame
+                dt = fps_ctrl.begin_frame()
 
-                ascii_art.append(self.process_frame(frame))
-                ascii_art_str = ascii_art[-1]
+                if fps_ctrl.should_render(dt):
+                    ascii_art.append(self.process_frame(frame))
+                    ascii_art_str = ascii_art[-1]
 
-                clear_console()
-                # Use logger to output rendered ASCII frame (keeps centralized formatting)
-                if ascii_art_str:
-                    print(ascii_art_str)
-                else:
-                    self.logger.warning("Empty frame received.")
+                    clear_console()
+                    # Use logger to output rendered ASCII frame (keeps centralized formatting)
+                    if ascii_art_str:
+                        print(ascii_art_str)
+                    else:
+                        self.logger.warning("Empty frame received.")
 
-                # Update/display smoothed FPS. If we have a target
-                # `frame_interval`, sleep the remaining time to match it.
-                if smoothed_fps is None:
-                    now_display = time.perf_counter()
-                    dt = now_display - prev_display_time
-                    smoothed_fps = 1.0 / dt if dt > 0 else 0.0
-                    prev_display_time = now_display
-                else:
-                    # Throttle to native FPS when available
-                    if frame_interval is not None:
-                        elapsed = time.perf_counter() - iter_start
-                        to_sleep = frame_interval - elapsed
-                        if to_sleep > 0:
-                            time.sleep(to_sleep)
+                    # Throttle and update smoothed FPS via FPSController
+                    smoothed = fps_ctrl.get_smoothed_fps()
+                    if smoothed is not None:
+                        print(f"{COLORS.CYAN.value}FPS: {smoothed:.1f}")
 
-                    now_display = time.perf_counter()
-                    dt = now_display - prev_display_time
-                    if dt > 0:
-                        inst_fps = 1.0 / dt
-                        smoothed_fps = (
-                            fps_smoothing_alpha * inst_fps
-                            + (1 - fps_smoothing_alpha) * smoothed_fps
-                        )
-                    prev_display_time = now_display
-
-                # Print the (possibly smoothed) FPS value for user feedback.
-                if smoothed_fps is not None:
-                    print(f"{COLORS.CYAN.value}FPS: {smoothed_fps:.1f}")
-
-                print(f"{COLORS.YELLOW.value}Press 'q' or ESC to exit...")
+                    print(f"{COLORS.YELLOW.value}Press 'q' or ESC to exit...")
 
                 if keyboard.is_pressed("q") or keyboard.is_pressed("esc"):
                     break
-
-                # Optional: respect target FPS (simple sleep)
-                # time.sleep(max(0, 1.0 / 30 - (time.time() - now)))
 
         except KeyboardInterrupt:
             self.logger.info("Processing interrupted by user.")
 
         finally:
+            # Release video capture resources
             cap.release()
+            # Ensure any windows are destroyed after capture is released
             cv2.destroyAllWindows()
 
         return "\n\n".join(ascii_art)
