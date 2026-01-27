@@ -41,14 +41,14 @@ class AppEngine:
             "exit": self.exit_program,
         }
 
+        init_colors()
+        self.logger.debug("Starting ASCII Generator application.")
+
     def run(self) -> None:
         """
         Main loop logic for the application.
         Handles menu navigation and user input.
         """
-
-        init_colors()
-        self.logger.debug("Starting ASCII Generator application.")
 
         try:
             while True:
@@ -69,6 +69,7 @@ class AppEngine:
                 else:
                     self.logger.warning(f"Unknown option: {answers['option']}")
                     continue
+
         except KeyboardInterrupt:
             self.exit_program()
 
@@ -76,64 +77,104 @@ class AppEngine:
             self.logger.error(f"An unexpected error occurred: {e}")
             raise
 
-    def _create_handler(self, source: str | int, is_video: bool) -> None:
+    def run_headless(
+        self,
+        input_source: str | int,
+        output_path: str | Path = "results/",
+        dry_run: bool = False,
+        source_type: str = "image",
+    ) -> None:
+        """Run processing in non-interactive (headless) mode.
+
+        input_source: path-like or 'camera' or integer index for camera
+        source_type: one of 'image', 'video', 'camera'
+        """
+        self.settings = self.config_manager.load_normalized()
+        self.logger.debug("Running in headless mode. dry_run=%s", dry_run)
+
+        # Determine source and whether it's a video
+        if source_type == "camera":
+            source = 0
+            is_video = True
+        else:
+            if isinstance(input_source, str) and input_source.isdigit():
+                # treat numeric string as camera index
+                source = int(input_source)
+                is_video = True
+            elif isinstance(input_source, str):
+                source = input_source
+                is_video = source_type == "video"
+            else:
+                self.logger.error("Invalid input_source type for headless mode.")
+                return
+
+        if dry_run:
+            self.logger.debug(
+                "Dry run: would process %s (is_video=%s) and save to %s",
+                source,
+                is_video,
+                output_path,
+            )
+            return
+
+        self._create_handler(source, is_video, output_path)
+
+    def _create_handler(
+        self, source: str | int, is_video: bool, output_path: str | Path = "output"
+    ) -> None:
         """Create and run the appropriate processor based on source type."""
         self.logger.debug("Creating handler for source: %s", source)
 
-        common_params: dict[str, Any] = {
-            "target_width": self.settings.width,
-            "scale": self.settings.scale_factor,
-            "sequence": self.settings.gradient,
-            "mode": self.settings.mode,
-            "invert": False,  # can be made configurable later
-            "mirror": False,  # can be made configurable later
-            "validator": FileValidator(),
-        }
-
-        processor: FrameProcessor = FrameProcessor(**common_params)
-
         try:
+            common_params: dict[str, Any] = {
+                "target_width": self.settings.width,
+                "scale": self.settings.scale_factor,
+                "sequence": self.settings.gradient,
+                "mode": self.settings.mode,
+                "invert": False,  # can be made configurable later
+                "mirror": False,  # can be made configurable later
+                "validator": FileValidator(),
+            }
+
+            processor: FrameProcessor = FrameProcessor(**common_params)
+
             ascii_art: str = processor.start_processing(source)
         except Exception as exc:
             self.logger.error(f"Processing failed: {exc}")
             input("\nPress ENTER to continue...")
             return
-        
+
         frames: list[str] = self.extract_frames(ascii_art)
         if not frames:
-            self.logger.warning("No frames were processed.")
+            self.logger.warning("No frames were produced from the source.")
             return
 
-        output_path: Path = Path("output").resolve()
+        output_dir: Path = Path(output_path).resolve()
         font_path: Path = Path("assets/fonts/JetBrainsMonoNerdFont-Bold.ttf").resolve()
 
         if is_video:
             message: str = "Do you want to save the output as a video file?"
             if self.menu.ask_cofirmation(message, default=True):
-                images: List[str] = frames_to_images(
+                self.save_video(
                     frames,
-                    out_dir=output_path/"frames",
-                    font_path=font_path.as_posix(),
-                )
-                images_to_video(
-                    images,
-                    output_path=output_path/"output_video.mp4",
+                    output_path=output_dir,
                     fps=self.settings.fps,
+                    font_path=font_path,
                 )
 
         else:
             message: str = "Do you want to save the output as image files?"
             if self.menu.ask_cofirmation(message, default=True):
-                frames_to_images(
+                self.save_image(
                     frames,
-                    out_dir=output_path/"static_images",
-                    font_path=font_path.as_posix(),
+                    output_path=output_dir,
+                    font_path=font_path,
                 )
-
+            message = "Do you want to save the output as text files?"
             if self.menu.ask_cofirmation(message, default=True):
-                frame_to_text(
-                    frames[0],
-                    out_path=output_path/"static_texts",
+                self.save_text(
+                    frames,
+                    output_path=output_dir,
                 )
 
         input("\nPress ENTER to continue...")
@@ -152,15 +193,6 @@ class AppEngine:
     def handle_camera(self) -> None:
         """Process live webcam feed."""
         self._create_handler(0, is_video=True)
-
-    def extract_frames(self, ascii_art: str) -> list[str]:
-        if isinstance(ascii_art, str):
-            return ascii_art.split("\n\n") if ascii_art else []
-        try:
-            return list(ascii_art)
-        except Exception:
-            self.logger.error("Failed to extract frames from ASCII art.")
-            return []
 
     @clear_screen
     def run_init_menu(self) -> None:
@@ -210,7 +242,9 @@ class AppEngine:
             # Print updated settings for user confirmation
             print("\nUpdated Settings:")
             for key, value in new_answers.items():
-                print(f" - {COLORS.YELLOW.value + key}{COLORS.RESET.value}: {COLORS.CYAN.value + value}")
+                print(
+                    f" - {COLORS.YELLOW.value + key}{COLORS.RESET.value}: {COLORS.CYAN.value + value}"
+                )
 
         except KeyboardInterrupt:
             self.logger.info("Settings update cancelled by user.")
@@ -221,6 +255,50 @@ class AppEngine:
             self.logger.error(f"Failed to update settings: {exc}")
 
         input("\nPress ENTER to continue...\n")
+
+    def extract_frames(self, ascii_art: str) -> list[str]:
+        """Extract individual frames from ASCII art output."""
+        if not ascii_art:
+            return []
+        
+        # Separated frames by blank lines (two \n)
+        raw_frames: List[str] = ascii_art.split("\n\n")
+        # Remove completely empty entries
+        return [f.strip() for f in raw_frames if f.strip()]
+
+    def save_image(
+        self, frames: List[str], output_path: Path, font_path: Path
+    ) -> List[str]:
+        """Save frames as image files."""
+        frames_list: List[str] = frames_to_images(
+            frames,
+            out_dir=output_path / "static_images",
+            font_path=font_path.resolve().as_posix(),
+        )
+        return frames_list
+
+    def save_text(self, frames: List[str], output_path: Path) -> None:
+        """Save frames as text files."""
+        frame_to_text(frames, output_path)
+
+    def save_video(
+        self,
+        frames: List[str],
+        output_path: Path,
+        fps: int,
+        font_path: Path = Path("assets/fonts/JetBrainsMonoNerdFont-Bold.ttf"),
+    ) -> None:
+        """Save frames as a video file."""
+        images: List[str] = self.save_image(
+            frames,
+            output_path=output_path / "frames",
+            font_path=font_path,
+        )
+        images_to_video(
+            images,
+            output_path=output_path / "output_video.mp4",
+            fps=fps,
+        )
 
     def exit_program(self) -> None:
         """Exit the application."""
