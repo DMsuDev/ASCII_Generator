@@ -20,4 +20,5 @@ class FileValidator:
             if not ok:
                 logger.warning("Invalid camera index: %s (only 0 allowed)", source)
             return ok
-        raise TypeError(f"Invalid source type: {type(source)}")
+        logger.error("Invalid source type: %s", type(source))
+        return False

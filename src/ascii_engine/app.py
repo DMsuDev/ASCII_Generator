@@ -92,7 +92,14 @@ class AppEngine:
 
         processor: FrameProcessor = FrameProcessor(**common_params)
 
-        frames: list[str] = self.extract_frames(processor.start_processing(source))
+        try:
+            ascii_art: str = processor.start_processing(source)
+        except Exception as exc:
+            self.logger.error(f"Processing failed: {exc}")
+            input("\nPress ENTER to continue...")
+            return
+        
+        frames: list[str] = self.extract_frames(ascii_art)
         if not frames:
             self.logger.warning("No frames were processed.")
             return
