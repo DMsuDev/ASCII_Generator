@@ -3,6 +3,7 @@ __pycache__/
 
 # Random files
 others/
+run.bat
 
 # Generated files
 output/
