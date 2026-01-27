@@ -19,7 +19,6 @@ from tqdm import tqdm
 import cv2
 
 import colorsys
-import time
 import re
 from ..log import get_logger
 
@@ -170,28 +169,28 @@ def _boost_rgb(rgb: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]
 
 
 def frame_to_text(
-        frame: str, 
-        out_path: Union[str, Path] = "output_texts"
+        frames: List[str], 
+        output_path: Union[str, Path] = "output_texts"
 ) -> None:
     """
     Save frame to a text file.
     Does not support ANSI or grayscale color output.
-    - `frame`: multiline string to save.
-    - `out_path`: directory where text files will be written (created if missing).
+    - `frames`: list of multiline strings to save.
+    - `output_path`: directory where text files will be written (created if missing).
     """
 
-    out_dir: Union[str, Path] = Path(out_path)
+    out_dir: Union[str, Path] = Path(output_path)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    filename: str = f"frame_{time.time_ns()}.txt"
-    output_file: Path = out_dir / filename
-
     try:
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(frame)
-        logger.info("Saved to: %s", output_file)
+        for idx, frame in enumerate(frames):
+            output_file: Path = out_dir / f"frame_{idx:04d}.txt"
+            with open(output_file, "w", encoding="utf-8") as f:
+                f.write(frame)
     except Exception as e:
         logger.error("Failed to save file: %s", e)
+    
+    logger.info("Saved %d text files to: %s", len(frames), out_dir)
 
 
 def frames_to_images(
