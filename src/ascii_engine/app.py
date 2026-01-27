@@ -167,7 +167,7 @@ class AppEngine:
             if self.menu.ask_cofirmation(message, default=True):
                 self.save_image(
                     frames,
-                    output_path=output_dir,
+                    output_path=output_dir / "static_images",
                     font_path=font_path,
                 )
             message = "Do you want to save the output as text files?"
@@ -272,7 +272,7 @@ class AppEngine:
         """Save frames as image files."""
         frames_list: List[str] = frames_to_images(
             frames,
-            out_dir=output_path / "static_images",
+            out_dir=output_path,
             font_path=font_path.resolve().as_posix(),
         )
         return frames_list
