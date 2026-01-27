@@ -4,7 +4,7 @@ This module provides two main helpers used by the CLI:
 - `frames_to_images(frames, out_dir, ...)` converts a list of ASCII/ANSI frames
   (each frame is a multiline string) into PNG images.
 - `images_to_video(img_dir_or_list, output_path, fps)` packs images into an MP4
-  using imageio (ffmpeg backend).
+  using cv2.
 
 The ANSI parser implemented is conservative but supports TrueColor SGR
 (`38;2;R;G;B`) and 256-color SGR (`38;5;N`) as foreground and background.
@@ -16,9 +16,9 @@ from typing import List, Optional, Sequence, Tuple, Union
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 from tqdm import tqdm
+import cv2
 
 import colorsys
-import imageio
 import time
 import re
 from ..log import get_logger
@@ -281,7 +281,7 @@ def images_to_video(
     output_path: Union[str, Path] = "out.mp4",
     fps: int = 12,
 ) -> Path:
-    """Create a video (mp4) from images using imageio.
+    """Create a video (mp4) from images using cv2.VideoWriter.
 
     - `img_dir_or_list`: directory path or a sequence of image file paths.
     - `output_path`: resulting video path.
@@ -306,15 +306,35 @@ def images_to_video(
         files = list(img_dir_or_list)
 
     if not files:
+        logger.error("No image files found in the specified directory/list.")
         raise FileNotFoundError("No image files found for video creation")
 
-    writer = imageio.get_writer(out_path, fps=fps)
+    # read first image to get dimensions
+    first_frame = cv2.imread(files[0])
+    
+    if first_frame is None:
+        logger.error("Error reading image file: %s", files[0])
+        raise RuntimeError(f"Failed to read image file: {files[0]}")
+
+    height, width, _ = first_frame.shape
+    
+    # create video writer
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    video = cv2.VideoWriter(str(out_path), fourcc, fps, (width, height))
     try:
         for f in files:
-            img = imageio.imread(f)
-            writer.append_data(img)
+            img = cv2.imread(f)
+
+            if img is None:
+                logger.warning("Skipping unreadable image file: %s", f)
+                continue
+            
+            video.write(img)
+    except Exception as e:
+        logger.error("Error during video creation: %s", e)
+        raise
     finally:
-        writer.close()
+        video.release()
 
     logger.info("Video saved to: %s", out_path)
     return out_path
