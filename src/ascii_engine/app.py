@@ -247,7 +247,7 @@ class AppEngine:
                 )
 
         except KeyboardInterrupt:
-            self.logger.info("Settings update cancelled by user.")
+            self.logger.debug("Settings update cancelled by user.")
             input("\nPress ENTER to continue...\n")
             return
 

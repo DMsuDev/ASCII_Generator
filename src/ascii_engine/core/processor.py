@@ -132,7 +132,7 @@ class FrameProcessor(Processor):
                     break
 
         except KeyboardInterrupt:
-            self.logger.info("Processing interrupted by user.")
+            self.logger.debug("Processing interrupted by user.")
 
         finally:
             # Release video capture resources

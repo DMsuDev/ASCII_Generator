@@ -131,25 +131,3 @@ class QuestionsManager:
         except Exception as exc:
             self.logger.error(f"Error while running menu '{menu_name}': {exc}")
             raise # Re-raise to allow higher-level handling
-        
-"""
-def run_menu(self, menu_name: str) -> Optional[Dict[str, Any]]:
-    # Build, display and process an interactive menu, returning user answers.
-    
-    prompts = self.build_prompt(menu_name)
-    if not prompts:
-        logger.warning(f"No prompts found for menu '{menu_name}'.")
-        return None
-
-    try:
-        answers = inquirer.prompt(prompts)
-    except Exception as exc:
-        logger.error(f"Error while prompting menu '{menu_name}': {exc}")
-        return None
-
-    if not answers:
-        logger.info("User cancelled or selected no action.")
-        return None
-
-    return answers
-"""
