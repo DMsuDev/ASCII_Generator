@@ -3,6 +3,7 @@ from typing import Optional, Union
 
 import cv2
 import keyboard
+import time
 import numpy as np
 
 from .validator import FileValidator
@@ -98,21 +99,28 @@ class FrameProcessor(Processor):
 
         # Get native video FPS; if unavailable don't throttle
         video_fps = cap.get(cv2.CAP_PROP_FPS) or 0.0
-
+        
         # FPS controller for throttling and smoothing
         fps_ctrl = FPSController(video_fps)
         try:
             while True:
+
                 ret, frame = cap.read()
                 if not ret:
-                    break 
-
-                # Delta time desde el último frame
+                    if source == 0: # Camera
+                        # For the camera: continue (live), but add small sleep to avoid saturation
+                        time.sleep(0.001)  # Avoid CPU to 100% in live
+                        continue
+                    else:
+                        break  # End of video/image sequence
+                    
+                # Delta time since last frame
                 dt = fps_ctrl.begin_frame()
 
+                ascii_art.append(self.process_frame(frame))
+                ascii_art_str = ascii_art[-1]
                 if fps_ctrl.should_render(dt):
-                    ascii_art.append(self.process_frame(frame))
-                    ascii_art_str = ascii_art[-1]
+                    # Read next frame
 
                     clear_console()
                     # Use logger to output rendered ASCII frame (keeps centralized formatting)
@@ -130,6 +138,7 @@ class FrameProcessor(Processor):
 
                 if keyboard.is_pressed("q") or keyboard.is_pressed("esc"):
                     break
+
 
         except KeyboardInterrupt:
             self.logger.debug("Processing interrupted by user.")
