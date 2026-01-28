@@ -119,6 +119,7 @@ class FrameProcessor(Processor):
 
                 ascii_art.append(self.process_frame(frame))
                 ascii_art_str = ascii_art[-1]
+                
                 if fps_ctrl.should_render(dt):
                     # Read next frame
 
@@ -146,7 +147,5 @@ class FrameProcessor(Processor):
         finally:
             # Release video capture resources
             cap.release()
-            # Ensure any windows are destroyed after capture is released
-            cv2.destroyAllWindows()
 
         return "\n\n".join(ascii_art)
