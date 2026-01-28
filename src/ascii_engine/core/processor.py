@@ -102,6 +102,7 @@ class FrameProcessor(Processor):
         # FPS controller for throttling and smoothing
         fps_ctrl = FPSController(video_fps)
         try:
+            frame_count = 0
             while True:
 
                 ret, frame = cap.read()
@@ -135,6 +136,12 @@ class FrameProcessor(Processor):
                         print(f"{COLORS.CYAN.value}FPS: {smoothed:.1f}")
 
                     print(f"{COLORS.YELLOW.value}Press 'Ctrl' + 'C' to exit...")
+
+                if frame_count == 0:
+                    clear_console()
+                    print(ascii_art_str or "Processing...")  # Initial frame output
+
+                frame_count += 1
 
 
         except KeyboardInterrupt:
