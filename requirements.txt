@@ -9,7 +9,7 @@ logger==1.4
 markdown-it-py==4.0.0
 mdurl==0.1.2
 numpy==2.4.1
-opencv-python==4.13.0.90
+opencv-python-headless==4.13.0.90
 pillow==12.1.0
 pyfiglet==1.0.4
 Pygments==2.19.2

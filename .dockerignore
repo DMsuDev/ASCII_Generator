@@ -1,0 +1,14 @@
+.venv
+./others
+./output
+__pycache__
+*.pyc
+.vscode
+.DS_Store
+.env
+.git
+.gitignore
+app.log
+config.json
+run.bat
+.python-version
