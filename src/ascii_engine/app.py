@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 from .cli.questions_manager import QuestionsManager
 from .cli.banner import Banner
@@ -120,11 +120,15 @@ class AppEngine:
         self._create_handler(source, is_video, output_path)
 
     def _create_handler(
-        self, source: str | int, is_video: bool, output_path: str | Path = "output"
+        self, source: Optional[str | int], is_video: bool, output_path: str | Path = "output"
     ) -> None:
         """Create and run the appropriate processor based on source type."""
         self.logger.debug("Creating handler for source: %s", source)
 
+        if source is None:
+            self.logger.warning("No source provided, aborting processing.")
+            return
+        
         try:
             common_params: dict[str, Any] = {
                 "target_width": self.settings.width,
@@ -143,7 +147,7 @@ class AppEngine:
             self.logger.error(f"Processing failed: {exc}")
             input("\nPress ENTER to continue...")
             return
-
+        
         frames: list[str] = self.extract_frames(ascii_art)
         if not frames:
             self.logger.warning("No frames were produced from the source.")
