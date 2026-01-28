@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Optional, Union
 
 import cv2
-import keyboard
 import time
 import numpy as np
 
@@ -119,7 +118,7 @@ class FrameProcessor(Processor):
 
                 ascii_art.append(self.process_frame(frame))
                 ascii_art_str = ascii_art[-1]
-                
+
                 if fps_ctrl.should_render(dt):
                     # Read next frame
 
@@ -135,10 +134,7 @@ class FrameProcessor(Processor):
                     if smoothed is not None:
                         print(f"{COLORS.CYAN.value}FPS: {smoothed:.1f}")
 
-                    print(f"{COLORS.YELLOW.value}Press 'q' or ESC to exit...")
-
-                if keyboard.is_pressed("q") or keyboard.is_pressed("esc"):
-                    break
+                    print(f"{COLORS.YELLOW.value}Press 'Ctrl' + 'C' to exit...")
 
 
         except KeyboardInterrupt:
