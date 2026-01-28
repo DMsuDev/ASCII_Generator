@@ -28,7 +28,7 @@ def parse_arguments(argv: Optional[list[str]] = None) -> argparse.Namespace:
     p_run.add_argument("--output", "-o", default="output/", help="Output folder or file path")
     p_run.add_argument("--dry-run", action="store_true", help="Simulate execution without making changes")
     p_run.add_argument(
-        "--type",
+        "--type", "-t",
         choices=["image", "video", "camera"],
         default="image",
         help="Type of the input source",

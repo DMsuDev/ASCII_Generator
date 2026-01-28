@@ -67,8 +67,19 @@ pip install -r requirements.txt
 
 Launch the application:
 
-```cmd
+```bash
+# To run the CLI app
 python src/main.py
+
+# Or run with arguments, e.g.:
+
+python src/main.py run --input path/to/video.mp4 --type video
+
+python src/main.py run -i ./assets/examples/img.jpg -o results -t image
+
+# For help:
+python src/main.py -h  
+python src/main.py run -h  
 ```
 
 Alternatively (**Windows** users):
