@@ -146,7 +146,5 @@ class FrameProcessor(Processor):
         finally:
             # Release video capture resources
             cap.release()
-            # Ensure any windows are destroyed after capture is released
-            cv2.destroyAllWindows()
 
         return "\n\n".join(ascii_art)

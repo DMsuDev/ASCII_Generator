@@ -4,6 +4,7 @@ __pycache__/
 # Random files
 others/
 run.bat
+.python-version
 
 # Generated files
 output/
