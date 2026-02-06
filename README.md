@@ -4,6 +4,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat)](LICENSE)
 ![Status](https://img.shields.io/badge/Status-Early%20Development-yellow?style=flat)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?style=flat)
+[![CI](https://github.com/DMsuDev/ASCII_Generator/actions/workflows/ci.yml/badge.svg)](https://github.com/DMsuDev/ASCII_Generator/actions/workflows/ci.yml)
+[![Docker Build](https://github.com/DMsuDev/ASCII_Generator/actions/workflows/docker.yml/badge.svg)](https://github.com/DMsuDev/ASCII_Generator/actions/workflows/docker.yml)
+[![CodeQL](https://github.com/DMsuDev/ASCII_Generator/actions/workflows/codeql.yml/badge.svg)](https://github.com/DMsuDev/ASCII_Generator/actions/workflows/codeql.yml)
 
 ## 📜 Overview
 
