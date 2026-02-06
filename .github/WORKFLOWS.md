@@ -23,10 +23,6 @@ This project include three workflows de GitHub Actions for CI, Docker build, and
 6. **Import tests**: Verifies that main modules can be imported correctly
 7. **Execution tests**: Runs the program with `--help` and `status` to verify basic functionality
 
-**Badges**: 
-```markdown
-[![CI](https://github.com/DMsuDev/ASCII_Generator/actions/workflows/ci.yml/badge.svg)](https://github.com/DMsuDev/ASCII_Generator/actions/workflows/ci.yml)
-```
 
 ### 2. Docker Build Workflow (`docker.yml`)
 
@@ -48,11 +44,6 @@ This project include three workflows de GitHub Actions for CI, Docker build, and
 **Features**:
 - Uses GitHub Actions cache to speed up builds
 - Does not push the image to any registry (can be configured for releases)
-
-**Badges**: 
-```markdown
-[![Docker Build](https://github.com/DMsuDev/ASCII_Generator/actions/workflows/docker.yml/badge.svg)](https://github.com/DMsuDev/ASCII_Generator/actions/workflows/docker.yml)
-```
 
 ### 3. CodeQL Security Analysis (`codeql.yml`)
 
@@ -78,11 +69,6 @@ This project include three workflows de GitHub Actions for CI, Docker build, and
 - `actions: read`
 - `contents: read`
 - `security-events: write`
-
-**Badges**: 
-```markdown
-[![CodeQL](https://github.com/DMsuDev/ASCII_Generator/actions/workflows/codeql.yml/badge.svg)](https://github.com/DMsuDev/ASCII_Generator/actions/workflows/codeql.yml)
-```
 
 ## Additional Configuration
 
